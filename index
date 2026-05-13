@@ -1,0 +1,3744 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GARAGE FX — Tuning Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* =========================================
+   GARAGE FX — TUNING STUDIO
+   Author: Rudenko Mykhailo (B-MSAP, Časť B)
+   ========================================= */
+
+:root {
+  --bg: #0a0a0f;
+  --bg-2: #14141c;
+  --bg-3: #1c1c28;
+  --pink: #ff2a6d;
+  --cyan: #05d9e8;
+  --yellow: #ffd23f;
+  --white: #f1f1f5;
+  --gray: #6b6b80;
+  --hazard-y: #ffcc00;
+  --hazard-k: #111111;
+  --pink-glow: 0 0 10px #ff2a6d, 0 0 20px #ff2a6d77;
+  --cyan-glow: 0 0 10px #05d9e8, 0 0 20px #05d9e877;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: var(--bg);
+  color: var(--white);
+  font-family: 'Rajdhani', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  cursor: crosshair;
+}
+
+body {
+  background:
+    radial-gradient(ellipse at top, #1a0a1f 0%, #0a0a0f 50%, #050507 100%);
+  position: relative;
+}
+
+/* Scanlines overlay */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(5, 217, 232, 0.03) 0px,
+    rgba(5, 217, 232, 0.03) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  z-index: 9998;
+  mix-blend-mode: screen;
+}
+
+/* CRT vignette */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.7) 100%);
+  z-index: 9997;
+}
+
+#particles {
+  position: fixed; inset: 0; z-index: 0;
+  pointer-events: none;
+}
+
+/* ===== Hazard stripes ===== */
+.hazard-bar {
+  width: 100%;
+  height: 14px;
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--hazard-y) 0,
+    var(--hazard-y) 14px,
+    var(--hazard-k) 14px,
+    var(--hazard-k) 28px
+  );
+  background-size: 200% 100%;
+  animation: hazardMove 4s linear infinite;
+  box-shadow: 0 0 12px rgba(255,204,0,0.4);
+}
+
+@keyframes hazardMove {
+  0% { background-position: 0 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ===== Buttons & UI ===== */
+button, .btn {
+  background: var(--bg-3);
+  color: var(--cyan);
+  border: 1px solid var(--cyan);
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  padding: 10px 18px;
+  cursor: pointer;
+  transition: all .15s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+button:hover, .btn:hover {
+  background: var(--cyan);
+  color: var(--bg);
+  box-shadow: var(--cyan-glow);
+  transform: translateY(-1px);
+}
+
+button:active { transform: translateY(0); }
+
+button.pink, .btn.pink {
+  color: var(--pink);
+  border-color: var(--pink);
+}
+
+button.pink:hover, .btn.pink:hover {
+  background: var(--pink);
+  color: var(--bg);
+  box-shadow: var(--pink-glow);
+}
+
+/* ===== Boot screen ===== */
+#boot {
+  position: fixed;
+  inset: 0;
+  background: #050507;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--cyan);
+  overflow: hidden;
+}
+
+#boot .ecu-logo {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 56px;
+  font-weight: 900;
+  color: var(--pink);
+  text-shadow: var(--pink-glow);
+  letter-spacing: 6px;
+  margin-bottom: 30px;
+  animation: flickerPink 2.5s infinite;
+}
+
+@keyframes flickerPink {
+  0%, 18%, 22%, 25%, 53%, 57%, 100% { opacity: 1; }
+  20%, 24%, 55% { opacity: 0.4; }
+}
+
+#boot .ecu-sub {
+  color: var(--cyan);
+  font-size: 14px;
+  letter-spacing: 4px;
+  margin-bottom: 40px;
+  text-shadow: var(--cyan-glow);
+}
+
+#boot .boot-log {
+  width: 600px;
+  max-width: 90vw;
+  height: 200px;
+  background: #07070b;
+  border: 1px solid #1c2030;
+  padding: 14px;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow: hidden;
+  margin-bottom: 22px;
+}
+
+#boot .boot-log .line { white-space: nowrap; }
+#boot .boot-log .line .ok { color: #43ff7a; }
+#boot .boot-log .line .warn { color: var(--yellow); }
+#boot .boot-log .line .err { color: var(--pink); }
+
+#boot .progress {
+  width: 600px; max-width: 90vw;
+  height: 18px;
+  border: 1px solid var(--cyan);
+  position: relative;
+  background: #07070b;
+}
+#boot .progress .fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--cyan), var(--pink));
+  box-shadow: 0 0 10px var(--cyan);
+  transition: width 80ms linear;
+}
+#boot .progress .pct {
+  position: absolute; right: -52px; top: 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+}
+
+#boot .skip {
+  margin-top: 30px;
+  font-size: 11px;
+  color: var(--gray);
+}
+
+#boot.gone { display: none; }
+
+/* ===== Top bar ===== */
+header.topbar {
+  position: relative;
+  z-index: 5;
+  padding: 22px 36px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #1c1c28;
+  background: linear-gradient(180deg, #0a0a0f 60%, transparent 100%);
+}
+
+header.topbar .logo {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: 22px;
+  color: var(--pink);
+  letter-spacing: 4px;
+  text-shadow: var(--pink-glow);
+}
+header.topbar .logo span { color: var(--cyan); text-shadow: var(--cyan-glow); }
+
+header.topbar .meta {
+  display: flex;
+  gap: 18px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--gray);
+  letter-spacing: 1.5px;
+}
+header.topbar .meta .ind {
+  display: flex; align-items: center; gap: 6px;
+}
+header.topbar .meta .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #43ff7a; box-shadow: 0 0 8px #43ff7a;
+  animation: pulse 1.4s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
+
+/* ===== Main menu ===== */
+main { position: relative; z-index: 4; padding: 30px 36px 80px; }
+
+.title-row {
+  text-align: center;
+  margin: 24px 0 36px;
+}
+.title-row h1 {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: 44px;
+  letter-spacing: 8px;
+  background: linear-gradient(90deg, var(--pink) 0%, var(--cyan) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 10px #ff2a6d55);
+}
+.title-row p {
+  margin-top: 8px;
+  color: var(--gray);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 4px;
+}
+
+.bays {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+  margin: 30px 0;
+}
+
+.bay {
+  position: relative;
+  border: 1px solid #2a2a3a;
+  background:
+    linear-gradient(135deg, #14141c 0%, #1c1c28 100%);
+  padding: 24px 20px 20px;
+  cursor: pointer;
+  transition: all .2s;
+  overflow: hidden;
+  min-height: 200px;
+}
+
+.bay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(255,42,109,0.16) 0%, transparent 60%),
+    radial-gradient(circle at 0% 100%, rgba(5,217,232,0.12) 0%, transparent 60%);
+  opacity: 0.7;
+  transition: opacity .2s;
+}
+.bay::after {
+  content: attr(data-num);
+  position: absolute;
+  right: 14px; top: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--gray);
+  letter-spacing: 2px;
+}
+.bay:hover {
+  border-color: var(--cyan);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 32px rgba(5,217,232,.25), inset 0 0 0 1px rgba(5,217,232,.4);
+}
+.bay:hover::before { opacity: 1.2; }
+
+.bay .ic {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--pink);
+  letter-spacing: 3px;
+  margin-bottom: 10px;
+}
+.bay h2 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--white);
+  margin-bottom: 8px;
+}
+.bay h2 .acc { color: var(--cyan); }
+.bay p {
+  font-size: 13px;
+  color: var(--gray);
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+.bay .enter {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--cyan);
+  letter-spacing: 2px;
+}
+.bay .enter::before { content: "▶ "; }
+
+/* ===== Bay screens (sub-pages) ===== */
+.bay-screen { display: none; min-height: 70vh; }
+.bay-screen.active { display: block; animation: glitchIn .35s ease; }
+
+@keyframes glitchIn {
+  0% { opacity: 0; transform: translateX(-12px) skewX(-3deg); filter: hue-rotate(120deg); }
+  60% { opacity: 1; transform: translateX(2px); filter: hue-rotate(20deg); }
+  100% { opacity: 1; transform: translateX(0); filter: none; }
+}
+
+.bay-screen .bay-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 18px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed #2a2a3a;
+}
+.bay-screen .bay-head h2 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 24px;
+  letter-spacing: 4px;
+  color: var(--pink);
+  text-shadow: var(--pink-glow);
+}
+.bay-screen .bay-head .crumbs {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--gray);
+  letter-spacing: 2px;
+}
+
+.workshop {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 18px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .workshop { grid-template-columns: 1fr; }
+}
+
+.panel {
+  background: var(--bg-2);
+  border: 1px solid #2a2a3a;
+  padding: 16px;
+  position: relative;
+}
+.panel .panel-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--cyan);
+  letter-spacing: 3px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed #2a2a3a;
+}
+.panel .panel-title::before { content: "// "; color: var(--gray); }
+
+.dropzone {
+  border: 2px dashed #2a2a3a;
+  padding: 24px;
+  text-align: center;
+  margin-bottom: 14px;
+  background: #07070b;
+  transition: all .2s;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--gray);
+  letter-spacing: 1.5px;
+}
+.dropzone:hover, .dropzone.dragover {
+  border-color: var(--pink);
+  color: var(--pink);
+  background: #1a0a14;
+  box-shadow: inset 0 0 20px rgba(255,42,109,.2);
+}
+.dropzone strong { color: var(--cyan); display: block; margin-bottom: 6px; font-size: 14px; }
+
+.filter-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 14px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+.filter-list::-webkit-scrollbar { width: 6px; }
+.filter-list::-webkit-scrollbar-track { background: #07070b; }
+.filter-list::-webkit-scrollbar-thumb { background: var(--cyan); }
+
+.fbtn {
+  padding: 7px 8px;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+.fbtn.active {
+  background: var(--pink);
+  color: var(--bg);
+  border-color: var(--pink);
+  box-shadow: var(--pink-glow);
+}
+
+.sliders { margin-top: 8px; }
+.slider-row {
+  margin: 10px 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--gray);
+}
+.slider-row label {
+  display: flex;
+  justify-content: space-between;
+  letter-spacing: 1.5px;
+  margin-bottom: 4px;
+}
+.slider-row label span { color: var(--cyan); }
+.slider-row input[type="range"] {
+  width: 100%;
+  -webkit-appearance: none;
+  background: #07070b;
+  height: 4px;
+  outline: none;
+  border: 1px solid #2a2a3a;
+}
+.slider-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  background: var(--pink);
+  border: 1px solid #fff;
+  cursor: pointer;
+  box-shadow: var(--pink-glow);
+}
+.slider-row input[type="range"]::-moz-range-thumb {
+  width: 14px; height: 14px;
+  background: var(--pink);
+  border: 1px solid #fff;
+  cursor: pointer;
+}
+
+.preview {
+  background: #050507;
+  border: 1px solid #2a2a3a;
+  min-height: 480px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+.preview .empty {
+  color: var(--gray);
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 2px;
+  font-size: 13px;
+  text-align: center;
+}
+.preview .empty::before {
+  content: "[ NO MEDIA LOADED ]";
+  color: var(--pink); display: block; margin-bottom: 8px;
+  text-shadow: var(--pink-glow);
+}
+.preview canvas, .preview video, .preview img {
+  max-width: 100%;
+  max-height: 580px;
+  display: block;
+}
+
+.action-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+
+/* ===== Audio bay specific ===== */
+.audio-vis {
+  width: 100%;
+  height: 220px;
+  background: #050507;
+  border: 1px solid #2a2a3a;
+  margin-top: 10px;
+}
+
+.rpm-gauge {
+  width: 180px; height: 180px;
+  border-radius: 50%;
+  border: 4px solid #2a2a3a;
+  position: relative;
+  margin: 0 auto;
+}
+
+/* ===== 3D bay specific ===== */
+#three-container {
+  width: 100%;
+  min-height: 560px;
+  height: 560px;
+  background: #050507;
+  border: 1px solid #2a2a3a;
+  position: relative;
+}
+#three-container canvas { display: block; width: 100% !important; height: 100% !important; }
+
+/* ===== Text bay specific ===== */
+.text-render-area {
+  min-height: 460px;
+  background: #050507;
+  border: 1px solid #2a2a3a;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+}
+
+/* ===== Footer / back button ===== */
+footer.botbar {
+  position: relative;
+  z-index: 5;
+  margin-top: 40px;
+  padding: 24px 36px;
+  border-top: 1px solid #1c1c28;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: linear-gradient(0deg, #0a0a0f 60%, transparent 100%);
+}
+footer.botbar .author {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--gray);
+  letter-spacing: 2px;
+}
+footer.botbar .author strong { color: var(--cyan); }
+
+/* ===== Glitch transition layer ===== */
+#glitch-fx {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  pointer-events: none;
+  opacity: 0;
+}
+#glitch-fx.on {
+  opacity: 1;
+  background:
+    repeating-linear-gradient(0deg, transparent 0, transparent 3px, rgba(255,42,109,.18) 3px, rgba(255,42,109,.18) 4px),
+    repeating-linear-gradient(0deg, transparent 0, transparent 7px, rgba(5,217,232,.18) 7px, rgba(5,217,232,.18) 8px);
+  animation: glitchHard .35s steps(4) 1;
+}
+@keyframes glitchHard {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-10px); filter: hue-rotate(80deg); }
+  50% { transform: translateX(10px); filter: hue-rotate(-80deg); }
+  75% { transform: translateX(-4px); }
+  100% { transform: translateX(0); }
+}
+
+/* ===== License plate text bay output ===== */
+.license-plate {
+  display: inline-block;
+  background: #fff;
+  color: #111;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: 64px;
+  letter-spacing: 8px;
+  padding: 16px 30px;
+  border: 4px solid #111;
+  border-radius: 8px;
+  box-shadow: 0 0 0 4px #ccc, 0 8px 24px rgba(0,0,0,0.7);
+  position: relative;
+}
+.license-plate.eu::before {
+  content: "EU\\ASK";
+  position: absolute;
+  left: 0; top: 0; bottom: 0; width: 30px;
+  background: #003399;
+  color: #ffcc00;
+  font-size: 10px;
+  display: flex; align-items: center; justify-content: center;
+  white-space: pre-line;
+  text-align: center;
+  border-radius: 4px 0 0 4px;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0;
+}
+
+.neon-text {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 60px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: #fff;
+  text-shadow:
+    0 0 4px #fff,
+    0 0 10px var(--pink),
+    0 0 22px var(--pink),
+    0 0 40px var(--pink),
+    0 0 80px var(--pink);
+  animation: neonFlick 3s infinite alternate;
+}
+@keyframes neonFlick {
+  0%, 18%, 22%, 25%, 53%, 57%, 100% {
+    text-shadow:
+      0 0 4px #fff,
+      0 0 10px var(--pink),
+      0 0 22px var(--pink),
+      0 0 40px var(--pink),
+      0 0 80px var(--pink);
+  }
+  20%, 24%, 55% { text-shadow: none; opacity: 0.6; }
+}
+
+.racing-text {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: 90px;
+  background: linear-gradient(180deg, #ff2a6d 0%, #ffcc00 50%, #05d9e8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: 6px;
+  transform: skewX(-12deg);
+  filter: drop-shadow(4px 6px 0 #111) drop-shadow(0 0 20px #ff2a6d55);
+}
+
+.speedo-text {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 120px;
+  font-weight: 900;
+  color: var(--cyan);
+  text-shadow: var(--cyan-glow);
+  letter-spacing: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ascii-art {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  line-height: 1.05;
+  color: var(--cyan);
+  white-space: pre;
+  text-shadow: var(--cyan-glow);
+}
+
+/* ===== Misc helpers ===== */
+.kv {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--gray);
+  letter-spacing: 1.5px;
+  margin: 4px 0;
+}
+.kv strong { color: var(--cyan); }
+
+.hidden { display: none !important; }
+
+#main-menu.hidden, .bay-screen { /* explicit */ }
+
+/* tiny color swatch grid */
+.color-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.color-grid .sw {
+  width: 26px; height: 26px;
+  border: 2px solid #2a2a3a;
+  cursor: pointer;
+  transition: all .15s;
+}
+.color-grid .sw.active {
+  border-color: var(--pink);
+  box-shadow: var(--pink-glow);
+  transform: scale(1.1);
+}
+
+/* environment selector */
+.env-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.env-grid .envbtn {
+  font-size: 10px; padding: 6px;
+}
+
+/* ===== TUNER GARAGE LAYOUT ===== */
+.tuner {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 18px;
+  align-items: start;
+}
+@media (max-width: 980px) { .tuner { grid-template-columns: 1fr; } }
+
+.tuner-left {
+  background: var(--bg-2);
+  border: 1px solid #2a2a3a;
+  position: relative;
+}
+
+.tuner-tabs {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  border-bottom: 1px solid #2a2a3a;
+  background: #07070b;
+}
+.t-tab {
+  padding: 8px 4px;
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--gray);
+  cursor: pointer;
+  border-right: 1px solid #1a1a26;
+  border-bottom: 2px solid transparent;
+  transition: all .15s;
+  user-select: none;
+}
+.t-tab:hover { color: var(--cyan); background: #0e0e16; }
+.t-tab.active {
+  color: var(--pink);
+  border-bottom-color: var(--pink);
+  background: #14141c;
+  text-shadow: var(--pink-glow);
+}
+
+.t-panel {
+  display: none;
+  padding: 14px;
+  min-height: 360px;
+}
+.t-panel.active { display: block; animation: fadeIn .2s; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; } }
+
+.opt-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 6px 0;
+}
+.opt {
+  padding: 6px 9px;
+  font-size: 10px;
+  letter-spacing: 1px;
+  background: #07070b;
+  color: var(--gray);
+  border: 1px solid #2a2a3a;
+}
+.opt:hover {
+  color: var(--cyan);
+  border-color: var(--cyan);
+  background: #07070b;
+  box-shadow: none;
+  transform: none;
+}
+.opt.active {
+  background: var(--pink);
+  color: #fff;
+  border-color: var(--pink);
+  box-shadow: var(--pink-glow);
+}
+
+.color-grid.small .sw { width: 22px; height: 22px; }
+
+.tuner-right { position: relative; }
+
+#three-container {
+  width: 100%;
+  min-height: 640px;
+  height: 640px;
+  background:
+    linear-gradient(180deg, #1a1a26 0%, #0a0a0f 100%);
+  border: 1px solid #2a2a3a;
+  position: relative;
+  overflow: hidden;
+}
+#three-container::after {
+  content: "";
+  position: absolute; inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.5) 100%);
+  z-index: 2;
+}
+
+.hud-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  padding: 14px 18px;
+  display: flex;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--cyan);
+  text-shadow: var(--cyan-glow);
+  z-index: 3;
+}
+.hud-overlay .hud-l { text-align: left; }
+.hud-overlay .hud-r { text-align: right; }
+.hud-overlay div { margin-bottom: 4px; }
+.hud-overlay .hud-r div:first-child {
+  color: var(--pink);
+  animation: pulse 1.3s infinite;
+}
+
+.stats-box {
+  background: #07070b;
+  border: 1px solid #2a2a3a;
+  padding: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--gray);
+  line-height: 1.7;
+}
+.stats-box .row {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px dashed #1a1a26;
+  padding: 2px 0;
+}
+.stats-box .row span { color: var(--cyan); }
+.stats-box .bar {
+  display: inline-block;
+  width: 80px;
+  height: 6px;
+  background: #1a1a26;
+  vertical-align: middle;
+  position: relative;
+}
+.stats-box .bar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--cyan), var(--pink));
+  box-shadow: 0 0 6px var(--pink);
+}
+
+/* GARAGE DOOR open animation */
+.garage-door {
+  position: absolute; inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      #2a2a30 0px, #2a2a30 30px,
+      #1a1a20 30px, #1a1a20 32px
+    );
+  border-top: 6px solid #444;
+  border-bottom: 6px solid #444;
+  transform-origin: top;
+  transition: transform 1.4s cubic-bezier(.5, 0, .3, 1);
+}
+.garage-door.open { transform: scaleY(0); }
+.garage-door::after {
+  content: "GARAGE FX — OPENING...";
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--pink);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: 8px;
+  text-shadow: var(--pink-glow);
+  animation: pulse 1s infinite;
+}
+</style>
+</head>
+<body>
+
+<!-- ============ Particle background ============ -->
+<canvas id="particles"></canvas>
+
+<!-- ============ Boot screen ============ -->
+<div id="boot">
+  <div class="ecu-logo">GARAGE FX</div>
+  <div class="ecu-sub">// TUNING STUDIO — ECU BOOT v2.6.1</div>
+  <div class="boot-log" id="bootLog"></div>
+  <div class="progress"><div class="fill" id="bootFill"></div><div class="pct" id="bootPct">0%</div></div>
+  <div class="skip">[ click anywhere to skip ]</div>
+</div>
+
+<!-- ============ Top bar ============ -->
+<header class="topbar">
+  <div class="logo">GARAGE<span>FX</span></div>
+  <div class="meta">
+    <div class="ind"><div class="dot"></div>SYS:ONLINE</div>
+    <div class="ind">ECU:v2.6.1</div>
+    <div class="ind" id="rpmReadout">RPM:0000</div>
+    <div class="ind">RUDENKO/B-MSAP</div>
+  </div>
+</header>
+<div class="hazard-bar"></div>
+
+<main>
+  <!-- ============ Main menu ============ -->
+  <section id="main-menu">
+    <div class="title-row">
+      <h1>TUNING STUDIO</h1>
+      <p>// SELECT BAY — APPLY MODS — EXPORT BUILD</p>
+    </div>
+    <div class="bays">
+      <div class="bay" data-num="01" data-bay="image">
+        <div class="ic">// MEDIA TYPE — IMAGE</div>
+        <h2>IMAGE <span class="acc">BAY</span></h2>
+        <p>Chrome shine, racing stripes, JDM poster, neon underglow, anime cel — 19 visual mods.</p>
+        <div class="enter">ENTER BAY</div>
+      </div>
+      <div class="bay" data-num="02" data-bay="audio">
+        <div class="ic">// MEDIA TYPE — AUDIO</div>
+        <h2>AUDIO <span class="acc">BAY</span></h2>
+        <p>Exhaust echo, doppler shift, sub boost, tunnel reverb — 12 sonic mods + RPM spectrum.</p>
+        <div class="enter">ENTER BAY</div>
+      </div>
+      <div class="bay" data-num="03" data-bay="video">
+        <div class="ic">// MEDIA TYPE — VIDEO</div>
+        <h2>VIDEO <span class="acc">BAY</span></h2>
+        <p>Speed ramp, motion blur, VHS dashcam, police strobe, Forza grade — 10 video mods.</p>
+        <div class="enter">ENTER BAY</div>
+      </div>
+      <div class="bay" data-num="04" data-bay="three">
+        <div class="ic">// MEDIA TYPE — 3D</div>
+        <h2>3D <span class="acc">BAY</span></h2>
+        <p>Load .glb/.obj cars, paint, swap environments, drop underglow — full showroom kit.</p>
+        <div class="enter">ENTER BAY</div>
+      </div>
+      <div class="bay" data-num="05" data-bay="text">
+        <div class="ic">// MEDIA TYPE — TEXT</div>
+        <h2>TEXT <span class="acc">BAY</span></h2>
+        <p>Neon signs, license plates, racing typography, ASCII cars, RPM counters.</p>
+        <div class="enter">ENTER BAY</div>
+      </div>
+    </div>
+
+    <div style="margin-top:40px; display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+      <div class="panel">
+        <div class="panel-title">ENGINE STATUS</div>
+        <div class="kv"><strong>CLIENT-SIDE:</strong> 100% NO BACKEND</div>
+        <div class="kv"><strong>STACK:</strong> HTML5 / CSS3 / VANILLA JS</div>
+        <div class="kv"><strong>APIs:</strong> WebGL / Web Audio / Canvas</div>
+        <div class="kv"><strong>DEPS:</strong> Three.js (CDN, optional)</div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">PROJECT INFO</div>
+        <div class="kv"><strong>AUTHOR:</strong> RUDENKO MYKHAILO</div>
+        <div class="kv"><strong>COURSE:</strong> B-MSAP, ČASŤ B</div>
+        <div class="kv"><strong>BUILD:</strong> GARAGE_FX // 2026</div>
+        <div class="kv"><strong>VAULT:</strong> CLIENT-ONLY DEPLOY</div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">QUICK GUIDE</div>
+        <div class="kv">1. ENTER A BAY</div>
+        <div class="kv">2. DRAG &amp; DROP MEDIA</div>
+        <div class="kv">3. APPLY FILTERS</div>
+        <div class="kv">4. EXPORT BUILD</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ IMAGE BAY ============ -->
+  <section class="bay-screen" id="bay-image">
+    <div class="bay-head">
+      <h2>// IMAGE BAY</h2>
+      <div class="crumbs">MENU › IMAGE</div>
+    </div>
+    <div class="workshop">
+      <div>
+        <div class="panel">
+          <div class="panel-title">UPLOAD</div>
+          <div class="dropzone" id="imgDrop">
+            <strong>DRAG IMAGE HERE</strong>
+            or click to browse · JPG/PNG/WEBP
+          </div>
+          <input type="file" id="imgFile" accept="image/*" class="hidden">
+        </div>
+        <div class="panel" style="margin-top:14px;">
+          <div class="panel-title">FILTERS</div>
+          <div class="filter-list" id="imgFilters"></div>
+          <div class="sliders">
+            <div class="slider-row"><label>BRIGHTNESS <span id="lblBri">100%</span></label><input type="range" id="sliBri" min="0" max="200" value="100"></div>
+            <div class="slider-row"><label>CONTRAST <span id="lblCon">100%</span></label><input type="range" id="sliCon" min="0" max="200" value="100"></div>
+            <div class="slider-row"><label>SATURATION <span id="lblSat">100%</span></label><input type="range" id="sliSat" min="0" max="200" value="100"></div>
+            <div class="slider-row"><label>HUE <span id="lblHue">0°</span></label><input type="range" id="sliHue" min="0" max="360" value="0"></div>
+            <div class="slider-row"><label>BLUR <span id="lblBlur">0px</span></label><input type="range" id="sliBlur" min="0" max="20" value="0"></div>
+            <div class="slider-row"><label>EXPOSURE <span id="lblExp">0</span></label><input type="range" id="sliExp" min="-100" max="100" value="0"></div>
+          </div>
+          <div class="action-row">
+            <button class="pink" id="imgReset">RESET</button>
+            <button id="imgExport">EXPORT PNG</button>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="preview" id="imgPreview">
+          <div class="empty">DROP AN IMAGE TO BEGIN</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ AUDIO BAY ============ -->
+  <section class="bay-screen" id="bay-audio">
+    <div class="bay-head">
+      <h2>// AUDIO BAY</h2>
+      <div class="crumbs">MENU › AUDIO</div>
+    </div>
+    <div class="workshop">
+      <div>
+        <div class="panel">
+          <div class="panel-title">UPLOAD</div>
+          <div class="dropzone" id="audDrop">
+            <strong>DRAG AUDIO HERE</strong>
+            or click · MP3/WAV/OGG
+          </div>
+          <input type="file" id="audFile" accept="audio/*" class="hidden">
+        </div>
+        <div class="panel" style="margin-top:14px;">
+          <div class="panel-title">FX CHAIN</div>
+          <div class="filter-list" id="audFilters"></div>
+          <div class="sliders">
+            <div class="slider-row"><label>GAIN <span id="lblGain">100%</span></label><input type="range" id="sliGain" min="0" max="300" value="100"></div>
+            <div class="slider-row"><label>PLAYBACK SPEED <span id="lblRate">1.00x</span></label><input type="range" id="sliRate" min="25" max="200" value="100"></div>
+            <div class="slider-row"><label>FX INTENSITY <span id="lblFxInt">50%</span></label><input type="range" id="sliFxInt" min="0" max="100" value="50"></div>
+          </div>
+          <div class="action-row">
+            <button id="audPlay">▶ PLAY</button>
+            <button class="pink" id="audStop">■ STOP</button>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="preview" id="audPreview" style="flex-direction:column; gap:10px; padding:14px;">
+          <div class="empty" id="audEmpty">DROP AUDIO TO BEGIN</div>
+          <canvas class="audio-vis" id="audVis" width="900" height="220"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ VIDEO BAY ============ -->
+  <section class="bay-screen" id="bay-video">
+    <div class="bay-head">
+      <h2>// VIDEO BAY</h2>
+      <div class="crumbs">MENU › VIDEO</div>
+    </div>
+    <div class="workshop">
+      <div>
+        <div class="panel">
+          <div class="panel-title">UPLOAD</div>
+          <div class="dropzone" id="vidDrop">
+            <strong>DRAG VIDEO HERE</strong>
+            or click · MP4/WEBM
+          </div>
+          <input type="file" id="vidFile" accept="video/*" class="hidden">
+        </div>
+        <div class="panel" style="margin-top:14px;">
+          <div class="panel-title">FX CHAIN</div>
+          <div class="filter-list" id="vidFilters"></div>
+          <div class="sliders">
+            <div class="slider-row"><label>BRIGHTNESS <span id="lblVBri">100%</span></label><input type="range" id="sliVBri" min="0" max="200" value="100"></div>
+            <div class="slider-row"><label>CONTRAST <span id="lblVCon">100%</span></label><input type="range" id="sliVCon" min="0" max="200" value="100"></div>
+            <div class="slider-row"><label>SATURATION <span id="lblVSat">100%</span></label><input type="range" id="sliVSat" min="0" max="300" value="100"></div>
+            <div class="slider-row"><label>FX INTENSITY <span id="lblVFx">50%</span></label><input type="range" id="sliVFx" min="0" max="100" value="50"></div>
+          </div>
+          <div class="action-row">
+            <button id="vidPlay">▶ PLAY</button>
+            <button class="pink" id="vidPause">‖ PAUSE</button>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="preview" id="vidPreview" style="flex-direction:column; gap:10px; padding:10px;">
+          <div class="empty" id="vidEmpty">DROP A VIDEO TO BEGIN</div>
+          <canvas id="vidCanvas" style="display:none; max-width:100%; max-height:560px;"></canvas>
+          <video id="vidSrc" style="display:none;" muted playsinline crossorigin="anonymous"></video>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 3D BAY — NFSU2-STYLE GARAGE ============ -->
+  <section class="bay-screen" id="bay-three">
+    <div class="bay-head">
+      <h2>// GARAGE — TUNING SHOP</h2>
+      <div class="crumbs">MENU › 3D › <span id="buildName">PROJECT GTR</span></div>
+    </div>
+    <div class="tuner">
+      <div class="tuner-left">
+        <div class="tuner-tabs" id="tunerTabs">
+          <div class="t-tab active" data-tab="paint">PAINT</div>
+          <div class="t-tab" data-tab="wheels">WHEELS</div>
+          <div class="t-tab" data-tab="body">BODY KIT</div>
+          <div class="t-tab" data-tab="spoiler">SPOILER</div>
+          <div class="t-tab" data-tab="hood">HOOD</div>
+          <div class="t-tab" data-tab="windows">WINDOWS</div>
+          <div class="t-tab" data-tab="neon">NEON</div>
+          <div class="t-tab" data-tab="susp">SUSPENSION</div>
+          <div class="t-tab" data-tab="env">SCENE</div>
+          <div class="t-tab" data-tab="stats">STATS</div>
+        </div>
+
+        <!-- PAINT -->
+        <div class="t-panel active" data-pane="paint">
+          <div class="panel-title">PAINT JOB</div>
+          <div class="kv">FINISH</div>
+          <div class="opt-row" id="paintFinish">
+            <button class="opt" data-v="gloss">GLOSS</button>
+            <button class="opt" data-v="metallic">METALLIC</button>
+            <button class="opt" data-v="matte">MATTE</button>
+            <button class="opt" data-v="chrome">CHROME</button>
+            <button class="opt" data-v="pearl">PEARL</button>
+          </div>
+          <div class="kv" style="margin-top:10px;">BODY COLOR</div>
+          <div class="color-grid" id="paintColors"></div>
+          <div class="kv" style="margin-top:10px;">STRIPES</div>
+          <div class="opt-row" id="stripeStyle">
+            <button class="opt" data-v="none">NONE</button>
+            <button class="opt" data-v="center">CENTER</button>
+            <button class="opt" data-v="dual">DUAL</button>
+            <button class="opt" data-v="rally">RALLY</button>
+          </div>
+          <div class="kv" style="margin-top:8px;">STRIPE COLOR</div>
+          <div class="color-grid small" id="stripeColors"></div>
+        </div>
+
+        <!-- WHEELS -->
+        <div class="t-panel" data-pane="wheels">
+          <div class="panel-title">RIMS &amp; TIRES</div>
+          <div class="kv">RIM STYLE</div>
+          <div class="opt-row" id="rimStyle">
+            <button class="opt" data-v="5spoke">5-SPOKE</button>
+            <button class="opt" data-v="mesh">MESH</button>
+            <button class="opt" data-v="deep">DEEP-DISH</button>
+            <button class="opt" data-v="split">SPLIT-6</button>
+            <button class="opt" data-v="turbine">TURBINE</button>
+            <button class="opt" data-v="blade">BLADE</button>
+          </div>
+          <div class="kv" style="margin-top:10px;">RIM COLOR</div>
+          <div class="color-grid small" id="rimColors"></div>
+          <div class="sliders" style="margin-top:8px;">
+            <div class="slider-row"><label>TIRE SIZE <span id="lblTire">18"</span></label><input type="range" id="sliTire" min="15" max="22" value="18"></div>
+            <div class="slider-row"><label>CAMBER <span id="lblCamber">0°</span></label><input type="range" id="sliCamber" min="-15" max="0" value="0"></div>
+            <div class="slider-row"><label>TIRE STRETCH <span id="lblStretch">0%</span></label><input type="range" id="sliStretch" min="0" max="50" value="0"></div>
+          </div>
+        </div>
+
+        <!-- BODY KIT -->
+        <div class="t-panel" data-pane="body">
+          <div class="panel-title">BODY KIT</div>
+          <div class="opt-row" id="bodyKit">
+            <button class="opt" data-v="stock">STOCK</button>
+            <button class="opt" data-v="sport">SPORT</button>
+            <button class="opt" data-v="aggro">AGGRESSIVE</button>
+            <button class="opt" data-v="wide">WIDE-BODY</button>
+          </div>
+          <div class="kv" style="margin-top:10px;">SIDE SKIRTS</div>
+          <div class="opt-row" id="sideSkirt">
+            <button class="opt" data-v="none">NONE</button>
+            <button class="opt" data-v="low">LOW</button>
+            <button class="opt" data-v="extreme">EXTREME</button>
+          </div>
+          <div class="kv" style="margin-top:10px;">FRONT LIP</div>
+          <div class="opt-row" id="frontLip">
+            <button class="opt" data-v="none">NONE</button>
+            <button class="opt" data-v="splitter">SPLITTER</button>
+            <button class="opt" data-v="canard">CANARDS</button>
+          </div>
+        </div>
+
+        <!-- SPOILER -->
+        <div class="t-panel" data-pane="spoiler">
+          <div class="panel-title">REAR SPOILER</div>
+          <div class="opt-row" id="spoilerType">
+            <button class="opt" data-v="none">NONE</button>
+            <button class="opt" data-v="lip">LIP</button>
+            <button class="opt" data-v="duck">DUCKTAIL</button>
+            <button class="opt" data-v="wing">WING</button>
+            <button class="opt" data-v="gt">GT WING</button>
+            <button class="opt" data-v="track">TRACK</button>
+          </div>
+          <div class="kv" style="margin-top:10px;">SPOILER COLOR</div>
+          <div class="color-grid small" id="spoilerColors"></div>
+          <div class="sliders" style="margin-top:8px;">
+            <div class="slider-row"><label>WING HEIGHT <span id="lblWingH">100%</span></label><input type="range" id="sliWingH" min="50" max="200" value="100"></div>
+          </div>
+        </div>
+
+        <!-- HOOD -->
+        <div class="t-panel" data-pane="hood">
+          <div class="panel-title">HOOD &amp; BONNET</div>
+          <div class="opt-row" id="hoodType">
+            <button class="opt" data-v="stock">STOCK</button>
+            <button class="opt" data-v="scoop">SCOOP</button>
+            <button class="opt" data-v="vent">VENTED</button>
+            <button class="opt" data-v="cowl">COWL</button>
+            <button class="opt" data-v="cf">CARBON</button>
+            <button class="opt" data-v="clear">TRANSPARENT</button>
+          </div>
+          <div class="kv" style="margin-top:10px;">HEADLIGHTS</div>
+          <div class="opt-row" id="hlType">
+            <button class="opt" data-v="halogen">HALOGEN</button>
+            <button class="opt" data-v="xenon">XENON</button>
+            <button class="opt" data-v="led">LED-BAR</button>
+            <button class="opt" data-v="off">OFF</button>
+          </div>
+        </div>
+
+        <!-- WINDOWS -->
+        <div class="t-panel" data-pane="windows">
+          <div class="panel-title">WINDOW TINT</div>
+          <div class="kv">TINT COLOR</div>
+          <div class="color-grid small" id="tintColors"></div>
+          <div class="sliders" style="margin-top:8px;">
+            <div class="slider-row"><label>TINT DARKNESS <span id="lblTint">40%</span></label><input type="range" id="sliTint" min="0" max="95" value="40"></div>
+            <div class="slider-row"><label>REFLECTIVITY <span id="lblRefl">50%</span></label><input type="range" id="sliRefl" min="0" max="100" value="50"></div>
+          </div>
+        </div>
+
+        <!-- NEON -->
+        <div class="t-panel" data-pane="neon">
+          <div class="panel-title">UNDERGLOW NEON</div>
+          <div class="opt-row" id="neonMode">
+            <button class="opt active" data-v="off">OFF</button>
+            <button class="opt" data-v="solid">SOLID</button>
+            <button class="opt" data-v="pulse">PULSE</button>
+            <button class="opt" data-v="rainbow">RAINBOW</button>
+            <button class="opt" data-v="strobe">STROBE</button>
+          </div>
+          <div class="kv" style="margin-top:10px;">NEON COLOR</div>
+          <div class="color-grid small" id="neonColors"></div>
+          <div class="sliders" style="margin-top:8px;">
+            <div class="slider-row"><label>INTENSITY <span id="lblNeonI">70%</span></label><input type="range" id="sliNeonI" min="0" max="100" value="70"></div>
+            <div class="slider-row"><label>SPREAD <span id="lblNeonS">100%</span></label><input type="range" id="sliNeonS" min="50" max="200" value="100"></div>
+          </div>
+        </div>
+
+        <!-- SUSPENSION -->
+        <div class="t-panel" data-pane="susp">
+          <div class="panel-title">SUSPENSION &amp; STANCE</div>
+          <div class="sliders">
+            <div class="slider-row"><label>RIDE HEIGHT <span id="lblRH">0</span></label><input type="range" id="sliRH" min="-30" max="20" value="0"></div>
+            <div class="slider-row"><label>FRONT DROP <span id="lblFD">0</span></label><input type="range" id="sliFD" min="-25" max="15" value="0"></div>
+            <div class="slider-row"><label>REAR DROP <span id="lblRD">0</span></label><input type="range" id="sliRD" min="-25" max="15" value="0"></div>
+            <div class="slider-row"><label>WHEEL POKE <span id="lblPoke">0</span></label><input type="range" id="sliPoke" min="0" max="30" value="0"></div>
+          </div>
+          <div class="opt-row" style="margin-top:8px;" id="stancePreset">
+            <button class="opt" data-v="reset">RESET</button>
+            <button class="opt" data-v="slammed">SLAMMED</button>
+            <button class="opt" data-v="hellaflush">HELLAFLUSH</button>
+            <button class="opt" data-v="raked">RAKED</button>
+            <button class="opt" data-v="track">TRACK</button>
+          </div>
+        </div>
+
+        <!-- ENV -->
+        <div class="t-panel" data-pane="env">
+          <div class="panel-title">SCENE / LOCATION</div>
+          <div class="env-grid" id="envGrid"></div>
+          <div class="kv" style="margin-top:8px;">CAMERA</div>
+          <div class="opt-row" id="camMode">
+            <button class="opt" data-v="orbit">ORBIT (drag)</button>
+            <button class="opt active" data-v="auto">AUTO-SPIN</button>
+            <button class="opt" data-v="lowfront">LOW FRONT</button>
+            <button class="opt" data-v="topdown">TOP-DOWN</button>
+            <button class="opt" data-v="cinema">CINEMATIC</button>
+          </div>
+        </div>
+
+        <!-- STATS -->
+        <div class="t-panel" data-pane="stats">
+          <div class="panel-title">BUILD STATS</div>
+          <input type="text" id="buildNameInput" value="PROJECT GTR" maxlength="22" style="width:100%; padding:8px; background:#07070b; border:1px solid #2a2a3a; color:var(--cyan); font-family:'JetBrains Mono',monospace; font-size:13px; letter-spacing:2px; margin-bottom:10px;">
+          <div id="statsBox" class="stats-box"></div>
+          <div class="action-row" style="margin-top:10px;">
+            <button id="exportShot">EXPORT JPG</button>
+            <button class="pink" id="randomBuild">RANDOMIZE</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tuner-right">
+        <div id="three-container">
+          <div class="empty" style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); color:var(--gray); font-family:'JetBrains Mono',monospace; font-size:12px; text-align:center;" id="threeEmpty">[ FIRING UP THE LIFT... ]</div>
+          <div class="garage-door" id="garageDoor"></div>
+          <div class="hud-overlay">
+            <div class="hud-l">
+              <div>BUILD: <span id="hudBuild">PROJECT GTR</span></div>
+              <div>FINISH: <span id="hudFin">GLOSS</span></div>
+              <div>RIMS: <span id="hudRim">5-SPOKE 18"</span></div>
+            </div>
+            <div class="hud-r">
+              <div>● REC</div>
+              <div id="hudRpm">RPM:0000</div>
+              <div id="hudFps">FPS:--</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TEXT BAY ============ -->
+  <section class="bay-screen" id="bay-text">
+    <div class="bay-head">
+      <h2>// TEXT BAY</h2>
+      <div class="crumbs">MENU › TEXT</div>
+    </div>
+    <div class="workshop">
+      <div>
+        <div class="panel">
+          <div class="panel-title">INPUT</div>
+          <input type="text" id="textInput" value="GARAGE FX" maxlength="40" style="width:100%; padding:10px; background:#07070b; border:1px solid #2a2a3a; color:var(--cyan); font-family:'JetBrains Mono',monospace; font-size:14px; letter-spacing:2px;">
+        </div>
+        <div class="panel" style="margin-top:14px;">
+          <div class="panel-title">STYLE</div>
+          <div class="filter-list" id="textFilters"></div>
+        </div>
+        <div class="panel" style="margin-top:14px;">
+          <div class="panel-title">RPM SIM</div>
+          <div class="action-row">
+            <button id="textSpeedo">SPIN SPEEDO</button>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="text-render-area" id="textRender"></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div class="hazard-bar"></div>
+<footer class="botbar">
+  <a href="javascript:history.back()" class="btn pink" id="backBtn">← SPÄŤ NA PORTÁL</a>
+  <div class="author">// GARAGE FX // <strong>RUDENKO MYKHAILO</strong> // B-MSAP — ČASŤ B // 2026</div>
+</footer>
+
+<div id="glitch-fx"></div>
+
+<!-- Three.js (loaded lazily when 3D bay opens) -->
+
+<script>
+/* =============================================================
+   GARAGE FX — JS engine
+   ============================================================= */
+"use strict";
+
+/* ---------- AUDIO UTIL: tiny synth for UI sounds ---------- */
+let uiAudioCtx = null;
+function ensureUiAudio() {
+  if (!uiAudioCtx) {
+    try { uiAudioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+  }
+  return uiAudioCtx;
+}
+function beep(freq=440, dur=0.06, type='square', vol=0.06) {
+  const ctx = ensureUiAudio(); if (!ctx) return;
+  const o = ctx.createOscillator(); const g = ctx.createGain();
+  o.type = type; o.frequency.value = freq;
+  g.gain.value = vol;
+  o.connect(g); g.connect(ctx.destination);
+  o.start();
+  g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+  o.stop(ctx.currentTime + dur);
+}
+function engineStart() {
+  const ctx = ensureUiAudio(); if (!ctx) return;
+  const o = ctx.createOscillator(); const g = ctx.createGain();
+  o.type = 'sawtooth';
+  o.frequency.setValueAtTime(60, ctx.currentTime);
+  o.frequency.exponentialRampToValueAtTime(220, ctx.currentTime + 0.9);
+  o.frequency.exponentialRampToValueAtTime(120, ctx.currentTime + 1.4);
+  g.gain.setValueAtTime(0.15, ctx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.5);
+  o.connect(g); g.connect(ctx.destination);
+  o.start(); o.stop(ctx.currentTime + 1.5);
+}
+
+document.addEventListener('click', (e) => {
+  if (e.target.closest('button, .btn, .bay, .fbtn, .sw, .envbtn, .dropzone')) {
+    beep(640, 0.04, 'square', 0.04);
+  }
+}, true);
+
+/* ---------- BOOT SCREEN ---------- */
+const bootLog = document.getElementById('bootLog');
+const bootFill = document.getElementById('bootFill');
+const bootPct = document.getElementById('bootPct');
+const bootEl = document.getElementById('boot');
+
+const bootMessages = [
+  ['INIT', 'ECU subsystem online'],
+  ['OK', 'Loading IMAGE BAY drivers'],
+  ['OK', 'Loading AUDIO BAY DSP modules'],
+  ['OK', 'Loading VIDEO BAY codec pipeline'],
+  ['OK', 'Loading 3D BAY WebGL renderer'],
+  ['OK', 'Loading TEXT BAY font cache'],
+  ['WARN', 'Cooling fan rpm low - acceptable'],
+  ['OK', 'Hazard lights operational'],
+  ['OK', 'Neon underglow primed'],
+  ['OK', 'Garage door servo unlocked'],
+  ['OK', 'Diagnostic port ready']
+];
+let bootIdx = 0, bootProgress = 0, bootDone = false;
+function appendBootLine(tag, msg) {
+  const line = document.createElement('div');
+  line.className = 'line';
+  const cls = tag === 'OK' ? 'ok' : (tag === 'WARN' ? 'warn' : 'err');
+  line.innerHTML = `<span class="${cls}">[${tag.padEnd(4)}]</span> ${msg}`;
+  bootLog.appendChild(line);
+  while (bootLog.children.length > 11) bootLog.removeChild(bootLog.firstChild);
+}
+function tickBoot() {
+  if (bootDone) return;
+  bootProgress += 2 + Math.random() * 4;
+  if (bootProgress > 100) bootProgress = 100;
+  bootFill.style.width = bootProgress + '%';
+  bootPct.textContent = Math.floor(bootProgress) + '%';
+  if (Math.random() < 0.4 && bootIdx < bootMessages.length) {
+    const [tag, msg] = bootMessages[bootIdx++];
+    appendBootLine(tag, msg);
+    beep(800 + Math.random()*400, 0.02, 'square', 0.025);
+  }
+  if (bootProgress >= 100 && bootIdx >= bootMessages.length) {
+    finishBoot();
+  } else {
+    setTimeout(tickBoot, 120 + Math.random()*180);
+  }
+}
+function finishBoot() {
+  if (bootDone) return;
+  bootDone = true;
+  appendBootLine('OK', 'BOOT COMPLETE - WELCOME');
+  setTimeout(() => {
+    bootEl.classList.add('gone');
+    engineStart();
+  }, 500);
+}
+document.getElementById('boot').addEventListener('click', () => {
+  bootProgress = 100;
+  while (bootIdx < bootMessages.length) {
+    appendBootLine(...bootMessages[bootIdx++]);
+  }
+  bootFill.style.width = '100%';
+  bootPct.textContent = '100%';
+  finishBoot();
+});
+setTimeout(tickBoot, 300);
+
+/* ---------- PARTICLE BG ---------- */
+const pCanvas = document.getElementById('particles');
+const pCtx = pCanvas.getContext('2d');
+let particles = [];
+let activity = 0;
+
+function resizeCanvas() {
+  pCanvas.width = window.innerWidth;
+  pCanvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+function spawnParticles() {
+  particles = [];
+  const n = 70;
+  for (let i = 0; i < n; i++) {
+    particles.push({
+      x: Math.random() * pCanvas.width,
+      y: Math.random() * pCanvas.height,
+      vx: (Math.random() - 0.5) * 0.4,
+      vy: (Math.random() - 0.5) * 0.4,
+      r: Math.random() * 1.4 + 0.4,
+      c: Math.random() < 0.5 ? '#ff2a6d' : '#05d9e8'
+    });
+  }
+}
+spawnParticles();
+
+function tickParticles() {
+  pCtx.fillStyle = 'rgba(10,10,15,0.18)';
+  pCtx.fillRect(0, 0, pCanvas.width, pCanvas.height);
+  const speedBoost = 1 + activity * 4;
+  for (const p of particles) {
+    p.x += p.vx * speedBoost;
+    p.y += p.vy * speedBoost;
+    if (p.x < 0) p.x = pCanvas.width;
+    if (p.x > pCanvas.width) p.x = 0;
+    if (p.y < 0) p.y = pCanvas.height;
+    if (p.y > pCanvas.height) p.y = 0;
+    pCtx.beginPath();
+    pCtx.fillStyle = p.c;
+    pCtx.shadowBlur = 8;
+    pCtx.shadowColor = p.c;
+    pCtx.arc(p.x, p.y, p.r * (1 + activity), 0, Math.PI*2);
+    pCtx.fill();
+  }
+  pCtx.shadowBlur = 0;
+  activity *= 0.96;
+  requestAnimationFrame(tickParticles);
+}
+tickParticles();
+
+document.addEventListener('mousemove', () => { activity = Math.min(1, activity + 0.04); });
+document.addEventListener('click', () => { activity = Math.min(1, activity + 0.4); });
+
+/* ---------- RPM TICKER (top bar fake) ---------- */
+const rpmReadout = document.getElementById('rpmReadout');
+setInterval(() => {
+  const r = Math.floor(1200 + activity * 6800 + Math.random()*400);
+  rpmReadout.textContent = 'RPM:' + String(r).padStart(4, '0');
+}, 120);
+
+/* ---------- NAVIGATION ---------- */
+const mainMenu = document.getElementById('main-menu');
+const screens = ['image', 'audio', 'video', 'three', 'text'];
+function glitchFlash() {
+  const g = document.getElementById('glitch-fx');
+  g.classList.add('on');
+  setTimeout(() => g.classList.remove('on'), 350);
+}
+function goBay(name) {
+  glitchFlash();
+  mainMenu.classList.add('hidden');
+  for (const s of screens) {
+    const el = document.getElementById('bay-' + s);
+    el.classList.toggle('active', s === name);
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  beep(1200, 0.08, 'square', 0.06);
+  setTimeout(() => beep(900, 0.06, 'square', 0.05), 60);
+  if (name === 'three') initThreeLazy();
+}
+function goMenu() {
+  glitchFlash();
+  mainMenu.classList.remove('hidden');
+  for (const s of screens) document.getElementById('bay-' + s).classList.remove('active');
+  beep(500, 0.06, 'square', 0.05);
+}
+document.querySelectorAll('.bay').forEach(b => {
+  b.addEventListener('click', () => goBay(b.dataset.bay));
+});
+
+/* Back button: when in a bay, go back to menu; when on menu, go to portal */
+document.getElementById('backBtn').addEventListener('click', (e) => {
+  const anyBayActive = screens.some(s => document.getElementById('bay-' + s).classList.contains('active'));
+  if (anyBayActive) {
+    e.preventDefault();
+    goMenu();
+  }
+  /* else: default link history.back() behaves */
+});
+
+/* keyboard nav */
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const anyBayActive = screens.some(s => document.getElementById('bay-' + s).classList.contains('active'));
+    if (anyBayActive) goMenu();
+  }
+});
+
+/* =============================================================
+   IMAGE BAY
+   ============================================================= */
+const IMG_FILTERS = [
+  'CHROME SHINE','CARBON FIBER','RACING STRIPES','NEON UNDERGLOW',
+  'JDM POSTER','INITIAL D','SMOKE TRAIL','ENGINE BAY',
+  'POLAROID','NIGHT TOKYO','TIRE BURN','SPEED LINES',
+  'HOLOGRAPHIC','DRIFT SMOKE','LENS DIRT','ANAMORPHIC FLARE',
+  'HALFTONE','GLITCH RGB','VIGNETTE+GRAIN'
+];
+
+const imgFiltersBox = document.getElementById('imgFilters');
+const imgState = { filter: null, img: null, bri:100, con:100, sat:100, hue:0, blur:0, exp:0 };
+
+IMG_FILTERS.forEach(name => {
+  const btn = document.createElement('button');
+  btn.className = 'fbtn';
+  btn.textContent = name;
+  btn.addEventListener('click', () => {
+    imgState.filter = (imgState.filter === name) ? null : name;
+    imgFiltersBox.querySelectorAll('.fbtn').forEach(b => b.classList.toggle('active', b.textContent === imgState.filter));
+    renderImage();
+  });
+  imgFiltersBox.appendChild(btn);
+});
+
+const imgDrop = document.getElementById('imgDrop');
+const imgFile = document.getElementById('imgFile');
+const imgPreview = document.getElementById('imgPreview');
+
+imgDrop.addEventListener('click', () => imgFile.click());
+imgDrop.addEventListener('dragover', e => { e.preventDefault(); imgDrop.classList.add('dragover'); });
+imgDrop.addEventListener('dragleave', () => imgDrop.classList.remove('dragover'));
+imgDrop.addEventListener('drop', e => {
+  e.preventDefault(); imgDrop.classList.remove('dragover');
+  if (e.dataTransfer.files[0]) loadImage(e.dataTransfer.files[0]);
+});
+imgFile.addEventListener('change', e => { if (e.target.files[0]) loadImage(e.target.files[0]); });
+
+function loadImage(file) {
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    imgState.img = img;
+    setupImgCanvas();
+    renderImage();
+  };
+  img.src = url;
+}
+
+let imgCanvas, imgCtx;
+function setupImgCanvas() {
+  imgPreview.innerHTML = '';
+  imgCanvas = document.createElement('canvas');
+  imgCtx = imgCanvas.getContext('2d');
+  const maxW = 900, maxH = 560;
+  let w = imgState.img.naturalWidth, h = imgState.img.naturalHeight;
+  const scale = Math.min(maxW / w, maxH / h, 1);
+  imgCanvas.width = Math.floor(w * scale);
+  imgCanvas.height = Math.floor(h * scale);
+  imgPreview.appendChild(imgCanvas);
+}
+
+[['sliBri','bri','lblBri','%'],['sliCon','con','lblCon','%'],['sliSat','sat','lblSat','%'],
+ ['sliHue','hue','lblHue','°'],['sliBlur','blur','lblBlur','px'],['sliExp','exp','lblExp','']]
+.forEach(([s, key, lab, suf]) => {
+  const el = document.getElementById(s);
+  el.addEventListener('input', () => {
+    imgState[key] = +el.value;
+    document.getElementById(lab).textContent = el.value + suf;
+    renderImage();
+  });
+});
+
+document.getElementById('imgReset').addEventListener('click', () => {
+  imgState.filter = null;
+  imgState.bri=100; imgState.con=100; imgState.sat=100; imgState.hue=0; imgState.blur=0; imgState.exp=0;
+  ['sliBri','sliCon','sliSat'].forEach(id => document.getElementById(id).value = 100);
+  ['sliHue','sliBlur','sliExp'].forEach(id => document.getElementById(id).value = 0);
+  ['lblBri','lblCon','lblSat'].forEach(id => document.getElementById(id).textContent = '100%');
+  document.getElementById('lblHue').textContent = '0°';
+  document.getElementById('lblBlur').textContent = '0px';
+  document.getElementById('lblExp').textContent = '0';
+  imgFiltersBox.querySelectorAll('.fbtn').forEach(b => b.classList.remove('active'));
+  renderImage();
+});
+
+document.getElementById('imgExport').addEventListener('click', () => {
+  if (!imgCanvas) return alert('Load an image first');
+  const a = document.createElement('a');
+  a.download = 'garage_fx_' + Date.now() + '.png';
+  a.href = imgCanvas.toDataURL('image/png');
+  a.click();
+  beep(800, 0.15, 'square', 0.08);
+});
+
+function renderImage() {
+  if (!imgState.img || !imgCanvas) return;
+  const c = imgCanvas, ctx = imgCtx, w = c.width, h = c.height;
+  ctx.save();
+  ctx.filter = `brightness(${imgState.bri}%) contrast(${imgState.con}%) saturate(${imgState.sat}%) hue-rotate(${imgState.hue}deg) blur(${imgState.blur}px)`;
+  ctx.drawImage(imgState.img, 0, 0, w, h);
+  ctx.restore();
+  if (imgState.exp !== 0) applyExposure(ctx, w, h, imgState.exp);
+  if (imgState.filter) applyImgFilter(ctx, w, h, imgState.filter);
+}
+
+function applyExposure(ctx, w, h, exp) {
+  const data = ctx.getImageData(0, 0, w, h);
+  const d = data.data;
+  const adj = exp * 1.28;
+  for (let i = 0; i < d.length; i += 4) {
+    d[i] = Math.max(0, Math.min(255, d[i] + adj));
+    d[i+1] = Math.max(0, Math.min(255, d[i+1] + adj));
+    d[i+2] = Math.max(0, Math.min(255, d[i+2] + adj));
+  }
+  ctx.putImageData(data, 0, 0);
+}
+
+function applyImgFilter(ctx, w, h, name) {
+  switch(name) {
+    case 'CHROME SHINE': {
+      const grad = ctx.createLinearGradient(0, 0, 0, h);
+      grad.addColorStop(0, 'rgba(255,255,255,0.35)');
+      grad.addColorStop(0.3, 'rgba(180,200,220,0.1)');
+      grad.addColorStop(0.55, 'rgba(255,255,255,0.45)');
+      grad.addColorStop(0.8, 'rgba(40,60,80,0.2)');
+      grad.addColorStop(1, 'rgba(255,255,255,0.25)');
+      ctx.globalCompositeOperation = 'overlay';
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+      ctx.globalCompositeOperation = 'source-over';
+      break;
+    }
+    case 'CARBON FIBER': {
+      ctx.globalAlpha = 0.55;
+      ctx.globalCompositeOperation = 'multiply';
+      const tile = 8;
+      for (let y = 0; y < h; y += tile) {
+        for (let x = 0; x < w; x += tile) {
+          ctx.fillStyle = ((x/tile + y/tile) % 2 === 0) ? '#0a0a0a' : '#2a2a2a';
+          ctx.fillRect(x, y, tile, tile);
+          ctx.fillStyle = 'rgba(255,255,255,0.04)';
+          ctx.fillRect(x, y, tile/2, tile/2);
+          ctx.fillRect(x+tile/2, y+tile/2, tile/2, tile/2);
+        }
+      }
+      ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+      break;
+    }
+    case 'RACING STRIPES': {
+      const sw = w * 0.08;
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.fillRect(w/2 - sw - 6, 0, sw, h);
+      ctx.fillRect(w/2 + 6, 0, sw, h);
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      ctx.fillRect(w/2 - sw - 8, 0, 2, h);
+      ctx.fillRect(w/2 + sw + 6, 0, 2, h);
+      ctx.fillRect(w/2 - 8, 0, 2, h);
+      ctx.fillRect(w/2 + 4, 0, 2, h);
+      break;
+    }
+    case 'NEON UNDERGLOW': {
+      const grad = ctx.createRadialGradient(w/2, h*1.1, 0, w/2, h*1.1, w*0.7);
+      grad.addColorStop(0, 'rgba(255,42,109,0.7)');
+      grad.addColorStop(0.4, 'rgba(255,42,109,0.4)');
+      grad.addColorStop(1, 'rgba(255,42,109,0)');
+      ctx.globalCompositeOperation = 'screen';
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+      const grad2 = ctx.createRadialGradient(w/2, h*1.1, 0, w/2, h*1.1, w*0.5);
+      grad2.addColorStop(0, 'rgba(5,217,232,0.5)');
+      grad2.addColorStop(1, 'rgba(5,217,232,0)');
+      ctx.fillStyle = grad2;
+      ctx.fillRect(0, 0, w, h);
+      ctx.globalCompositeOperation = 'source-over';
+      break;
+    }
+    case 'JDM POSTER': {
+      const data = ctx.getImageData(0,0,w,h);
+      const d = data.data;
+      for (let i = 0; i < d.length; i += 4) {
+        d[i] = Math.min(255, d[i]*1.2 + 30);
+        d[i+1] = Math.min(255, d[i+1]*0.9 + 10);
+        d[i+2] = Math.min(255, d[i+2]*1.15 + 20);
+      }
+      ctx.putImageData(data, 0, 0);
+      ctx.fillStyle = 'rgba(255,42,109,0.18)';
+      ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(8, 8, w-16, h-16);
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 24px Orbitron, sans-serif';
+      ctx.fillText('JDM', 16, h - 16);
+      break;
+    }
+    case 'INITIAL D': {
+      const data = ctx.getImageData(0,0,w,h);
+      const d = data.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const r = d[i], g = d[i+1], b = d[i+2];
+        const avg = (r+g+b)/3;
+        const step = avg < 80 ? 0 : (avg < 160 ? 128 : 220);
+        d[i] = step; d[i+1] = step; d[i+2] = step;
+      }
+      ctx.putImageData(data, 0, 0);
+      ctx.globalCompositeOperation = 'lighten';
+      ctx.fillStyle = 'rgba(255,180,200,0.15)';
+      ctx.fillRect(0, 0, w, h);
+      ctx.globalCompositeOperation = 'source-over';
+      // speed lines
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 30; i++) {
+        ctx.beginPath();
+        const y = Math.random() * h;
+        ctx.moveTo(0, y); ctx.lineTo(w * Math.random(), y);
+        ctx.stroke();
+      }
+      break;
+    }
+    case 'SMOKE TRAIL': {
+      for (let i = 0; i < 18; i++) {
+        const x = Math.random() * w;
+        const y = h - Math.random() * (h*0.6);
+        const r = 30 + Math.random()*120;
+        const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+        g.addColorStop(0, `rgba(200,200,210,${0.1 + Math.random()*0.2})`);
+        g.addColorStop(1, 'rgba(200,200,210,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+      }
+      break;
+    }
+    case 'ENGINE BAY': {
+      const data = ctx.getImageData(0,0,w,h);
+      const d = data.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const avg = (d[i]+d[i+1]+d[i+2])/3;
+        const contrasted = ((avg - 128) * 1.8) + 128;
+        const v = Math.max(0, Math.min(255, contrasted));
+        d[i] = v*0.95; d[i+1] = v*0.85; d[i+2] = v*0.75;
+      }
+      ctx.putImageData(data, 0, 0);
+      // soot grain
+      for (let i = 0; i < 1200; i++) {
+        ctx.fillStyle = `rgba(0,0,0,${Math.random()*0.3})`;
+        ctx.fillRect(Math.random()*w, Math.random()*h, 1, 1);
+      }
+      break;
+    }
+    case 'POLAROID': {
+      const data = ctx.getImageData(0,0,w,h);
+      const d = data.data;
+      for (let i = 0; i < d.length; i += 4) {
+        d[i] = Math.min(255, d[i]*0.95 + 20);
+        d[i+1] = Math.min(255, d[i+1]*0.92 + 10);
+        d[i+2] = Math.min(255, d[i+2]*0.85);
+      }
+      ctx.putImageData(data, 0, 0);
+      ctx.fillStyle = '#f5e6c8';
+      ctx.fillRect(0, 0, w, 18);
+      ctx.fillRect(0, h-50, w, 50);
+      ctx.fillRect(0, 0, 18, h);
+      ctx.fillRect(w-18, 0, 18, h);
+      ctx.fillStyle = '#444';
+      ctx.font = '14px Rajdhani';
+      ctx.fillText('GARAGE FX // SHOT', 26, h - 24);
+      break;
+    }
+    case 'NIGHT TOKYO': {
+      const data = ctx.getImageData(0,0,w,h);
+      const d = data.data;
+      for (let i = 0; i < d.length; i += 4) {
+        d[i] = d[i]*0.5;
+        d[i+1] = d[i+1]*0.55 + 5;
+        d[i+2] = Math.min(255, d[i+2]*1.1 + 30);
+      }
+      ctx.putImageData(data, 0, 0);
+      ctx.globalCompositeOperation = 'screen';
+      for (let i = 0; i < 25; i++) {
+        const x = Math.random()*w, y = Math.random()*h;
+        const r = 6 + Math.random()*30;
+        const c = Math.random() < 0.5 ? 'rgba(255,42,109,0.7)' : 'rgba(5,217,232,0.7)';
+        const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+        g.addColorStop(0, c); g.addColorStop(1, 'transparent');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+      }
+      ctx.globalCompositeOperation = 'source-over';
+      break;
+    }
+    case 'TIRE BURN': {
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.fillStyle = 'rgba(50,30,30,0.6)';
+      ctx.fillRect(0, h*0.7, w, h*0.3);
+      ctx.globalCompositeOperation = 'source-over';
+      // skid marks
+      ctx.strokeStyle = 'rgba(20,20,20,0.7)';
+      ctx.lineWidth = 8;
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.moveTo(Math.random()*w, h);
+        ctx.bezierCurveTo(w*0.3, h*0.7, w*0.7, h*0.8, w*Math.random(), h);
+        ctx.stroke();
+      }
+      break;
+    }
+    case 'SPEED LINES': {
+      ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+      ctx.lineWidth = 2;
+      const cx = w/2, cy = h/2;
+      for (let i = 0; i < 70; i++) {
+        const ang = Math.random()*Math.PI*2;
+        const r1 = 80 + Math.random()*120;
+        const r2 = r1 + 40 + Math.random()*220;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(ang)*r1, cy + Math.sin(ang)*r1);
+        ctx.lineTo(cx + Math.cos(ang)*r2, cy + Math.sin(ang)*r2);
+        ctx.stroke();
+      }
+      break;
+    }
+    case 'HOLOGRAPHIC': {
+      ctx.globalCompositeOperation = 'screen';
+      const g = ctx.createLinearGradient(0, 0, w, h);
+      g.addColorStop(0, 'rgba(255,42,109,0.35)');
+      g.addColorStop(0.33, 'rgba(255,210,63,0.35)');
+      g.addColorStop(0.66, 'rgba(5,217,232,0.35)');
+      g.addColorStop(1, 'rgba(170,90,255,0.35)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+      ctx.globalCompositeOperation = 'source-over';
+      break;
+    }
+    case 'DRIFT SMOKE': {
+      ctx.globalCompositeOperation = 'screen';
+      for (let i = 0; i < 14; i++) {
+        const x = (i/14)*w + Math.random()*60 - 30;
+        const y = h - 40 - Math.random()*120;
+        const r = 60 + Math.random()*180;
+        const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+        g.addColorStop(0, 'rgba(255,255,255,0.35)');
+        g.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+      }
+      ctx.globalCompositeOperation = 'source-over';
+      break;
+    }
+    case 'LENS DIRT': {
+      for (let i = 0; i < 60; i++) {
+        ctx.fillStyle = `rgba(200,200,200,${0.1 + Math.random()*0.15})`;
+        const x = Math.random()*w, y = Math.random()*h;
+        ctx.beginPath();
+        ctx.arc(x, y, 1 + Math.random()*8, 0, Math.PI*2);
+        ctx.fill();
+      }
+      ctx.fillStyle = 'rgba(255,255,255,0.05)';
+      ctx.fillRect(0, 0, w, h);
+      break;
+    }
+    case 'ANAMORPHIC FLARE': {
+      ctx.globalCompositeOperation = 'screen';
+      const cx = w*0.7, cy = h*0.3;
+      const g = ctx.createLinearGradient(0, cy, w, cy);
+      g.addColorStop(0, 'rgba(5,217,232,0)');
+      g.addColorStop(0.5, 'rgba(5,217,232,0.6)');
+      g.addColorStop(1, 'rgba(5,217,232,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, cy - 4, w, 8);
+      const g2 = ctx.createRadialGradient(cx, cy, 0, cx, cy, 80);
+      g2.addColorStop(0, 'rgba(255,255,255,0.8)');
+      g2.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = g2;
+      ctx.beginPath(); ctx.arc(cx, cy, 80, 0, Math.PI*2); ctx.fill();
+      ctx.globalCompositeOperation = 'source-over';
+      break;
+    }
+    case 'HALFTONE': {
+      const data = ctx.getImageData(0,0,w,h);
+      const d = data.data;
+      ctx.fillStyle = '#fff'; ctx.fillRect(0,0,w,h);
+      const step = 6;
+      for (let y = 0; y < h; y += step) {
+        for (let x = 0; x < w; x += step) {
+          const idx = (Math.floor(y)*w + Math.floor(x))*4;
+          const lum = (d[idx]+d[idx+1]+d[idx+2])/3 / 255;
+          const r = (1 - lum) * step * 0.6;
+          ctx.fillStyle = '#111';
+          ctx.beginPath(); ctx.arc(x+step/2, y+step/2, r, 0, Math.PI*2); ctx.fill();
+        }
+      }
+      break;
+    }
+    case 'GLITCH RGB': {
+      const data = ctx.getImageData(0,0,w,h);
+      const out = ctx.createImageData(w, h);
+      const d = data.data, o = out.data;
+      const sR = 6, sB = -6;
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const i = (y*w + x)*4;
+          const iR = (y*w + Math.min(w-1, Math.max(0, x + sR)))*4;
+          const iB = (y*w + Math.min(w-1, Math.max(0, x + sB)))*4;
+          o[i] = d[iR];
+          o[i+1] = d[i+1];
+          o[i+2] = d[iB+2];
+          o[i+3] = 255;
+        }
+      }
+      ctx.putImageData(out, 0, 0);
+      // glitch slices
+      for (let i = 0; i < 6; i++) {
+        const y = Math.random()*h;
+        const hh = 2 + Math.random()*10;
+        const off = (Math.random()-0.5)*30;
+        const slice = ctx.getImageData(0, y, w, hh);
+        ctx.putImageData(slice, off, y);
+      }
+      break;
+    }
+    case 'VIGNETTE+GRAIN': {
+      const g = ctx.createRadialGradient(w/2, h/2, Math.min(w,h)*0.3, w/2, h/2, Math.max(w,h)*0.7);
+      g.addColorStop(0, 'rgba(0,0,0,0)');
+      g.addColorStop(1, 'rgba(0,0,0,0.85)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+      for (let i = 0; i < 4000; i++) {
+        ctx.fillStyle = `rgba(255,255,255,${Math.random()*0.07})`;
+        ctx.fillRect(Math.random()*w, Math.random()*h, 1, 1);
+      }
+      break;
+    }
+  }
+}
+
+/* =============================================================
+   AUDIO BAY
+   ============================================================= */
+const AUD_FILTERS = [
+  'ENGINE REV','EXHAUST ECHO','DOPPLER','TUNNEL REVERB',
+  'SUB BOOST','VINYL LO-FI','DRIFT SCREECH','RADIO AM',
+  'MEGAPHONE','DISTORTION','PHASER','8D PAN'
+];
+
+const audState = {
+  ctx: null, buffer: null, source: null, gain: null, analyser: null,
+  filter: null, playing: false, intensity: 0.5, gainVal: 1, rate: 1,
+  lfo: null, lfoGain: null, panner: null
+};
+
+const audFiltersBox = document.getElementById('audFilters');
+AUD_FILTERS.forEach(name => {
+  const b = document.createElement('button');
+  b.className = 'fbtn';
+  b.textContent = name;
+  b.addEventListener('click', () => {
+    audState.filter = audState.filter === name ? null : name;
+    audFiltersBox.querySelectorAll('.fbtn').forEach(x => x.classList.toggle('active', x.textContent === audState.filter));
+    if (audState.playing) restartAudio();
+  });
+  audFiltersBox.appendChild(b);
+});
+
+const audDrop = document.getElementById('audDrop');
+const audFile = document.getElementById('audFile');
+audDrop.addEventListener('click', () => audFile.click());
+audDrop.addEventListener('dragover', e => { e.preventDefault(); audDrop.classList.add('dragover'); });
+audDrop.addEventListener('dragleave', () => audDrop.classList.remove('dragover'));
+audDrop.addEventListener('drop', e => {
+  e.preventDefault(); audDrop.classList.remove('dragover');
+  if (e.dataTransfer.files[0]) loadAudio(e.dataTransfer.files[0]);
+});
+audFile.addEventListener('change', e => { if (e.target.files[0]) loadAudio(e.target.files[0]); });
+
+async function loadAudio(file) {
+  const buf = await file.arrayBuffer();
+  if (!audState.ctx) audState.ctx = new (window.AudioContext || window.webkitAudioContext)();
+  document.getElementById('audEmpty').style.display = 'none';
+  document.getElementById('audDrop').innerHTML = '<strong>LOADED: ' + file.name.substring(0, 30) + '</strong>swap file anytime';
+  audState.buffer = await audState.ctx.decodeAudioData(buf);
+}
+
+document.getElementById('sliGain').addEventListener('input', e => {
+  audState.gainVal = +e.target.value / 100;
+  document.getElementById('lblGain').textContent = e.target.value + '%';
+  if (audState.gain) audState.gain.gain.value = audState.gainVal;
+});
+document.getElementById('sliRate').addEventListener('input', e => {
+  audState.rate = +e.target.value / 100;
+  document.getElementById('lblRate').textContent = (audState.rate).toFixed(2) + 'x';
+  if (audState.source) audState.source.playbackRate.value = audState.rate;
+});
+document.getElementById('sliFxInt').addEventListener('input', e => {
+  audState.intensity = +e.target.value / 100;
+  document.getElementById('lblFxInt').textContent = e.target.value + '%';
+  if (audState.playing) restartAudio();
+});
+
+document.getElementById('audPlay').addEventListener('click', playAudio);
+document.getElementById('audStop').addEventListener('click', stopAudio);
+
+function stopAudio() {
+  if (audState.source) { try { audState.source.stop(); } catch(e){} audState.source = null; }
+  audState.playing = false;
+}
+function restartAudio() {
+  stopAudio();
+  playAudio();
+}
+
+function makeImpulse(ctx, duration, decay) {
+  const rate = ctx.sampleRate;
+  const length = rate * duration;
+  const impulse = ctx.createBuffer(2, length, rate);
+  for (let c = 0; c < 2; c++) {
+    const ch = impulse.getChannelData(c);
+    for (let i = 0; i < length; i++) {
+      ch[i] = (Math.random()*2 - 1) * Math.pow(1 - i/length, decay);
+    }
+  }
+  return impulse;
+}
+
+function makeDistortionCurve(amount) {
+  const n = 256;
+  const curve = new Float32Array(n);
+  const k = amount;
+  for (let i = 0; i < n; i++) {
+    const x = (i*2/n) - 1;
+    curve[i] = ((3 + k)*x*20*Math.PI/180) / (Math.PI + k*Math.abs(x));
+  }
+  return curve;
+}
+
+function playAudio() {
+  if (!audState.buffer || !audState.ctx) return alert('Load audio first');
+  stopAudio();
+  const ctx = audState.ctx;
+  const src = ctx.createBufferSource();
+  src.buffer = audState.buffer;
+  src.playbackRate.value = audState.rate;
+  const gainNode = ctx.createGain();
+  gainNode.gain.value = audState.gainVal;
+  const analyser = ctx.createAnalyser();
+  analyser.fftSize = 1024;
+
+  let chain = src;
+  const fxInt = audState.intensity;
+
+  switch(audState.filter) {
+    case 'ENGINE REV': {
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = 8 + fxInt * 18;
+      const lfoG = ctx.createGain();
+      lfoG.gain.value = 0.4 + fxInt * 0.6;
+      const mod = ctx.createGain();
+      mod.gain.value = 1;
+      lfo.connect(lfoG); lfoG.connect(mod.gain);
+      chain.connect(mod);
+      chain = mod;
+      lfo.start();
+      audState.lfo = lfo;
+      break;
+    }
+    case 'EXHAUST ECHO': {
+      const delay = ctx.createDelay();
+      delay.delayTime.value = 0.2 + fxInt * 0.4;
+      const fb = ctx.createGain();
+      fb.gain.value = 0.4 + fxInt * 0.4;
+      const dry = ctx.createGain(); dry.gain.value = 1;
+      const wet = ctx.createGain(); wet.gain.value = fxInt;
+      chain.connect(dry);
+      chain.connect(delay);
+      delay.connect(fb); fb.connect(delay);
+      delay.connect(wet);
+      const merge = ctx.createGain();
+      dry.connect(merge); wet.connect(merge);
+      chain = merge;
+      break;
+    }
+    case 'DOPPLER': {
+      const pitchShift = ctx.createGain(); pitchShift.gain.value = 1;
+      src.playbackRate.setValueAtTime(0.6, ctx.currentTime);
+      src.playbackRate.linearRampToValueAtTime(1.5, ctx.currentTime + 2);
+      src.playbackRate.linearRampToValueAtTime(audState.rate, ctx.currentTime + 3.5);
+      break;
+    }
+    case 'TUNNEL REVERB': {
+      const conv = ctx.createConvolver();
+      conv.buffer = makeImpulse(ctx, 3.5, 2);
+      const dry = ctx.createGain(); dry.gain.value = 1 - fxInt*0.5;
+      const wet = ctx.createGain(); wet.gain.value = fxInt;
+      chain.connect(dry); chain.connect(conv); conv.connect(wet);
+      const merge = ctx.createGain();
+      dry.connect(merge); wet.connect(merge);
+      chain = merge;
+      break;
+    }
+    case 'SUB BOOST': {
+      const low = ctx.createBiquadFilter();
+      low.type = 'lowshelf';
+      low.frequency.value = 200;
+      low.gain.value = 8 + fxInt*20;
+      chain.connect(low);
+      chain = low;
+      break;
+    }
+    case 'VINYL LO-FI': {
+      const low = ctx.createBiquadFilter();
+      low.type = 'lowpass'; low.frequency.value = 3500 - fxInt*1500;
+      const hi = ctx.createBiquadFilter();
+      hi.type = 'highpass'; hi.frequency.value = 80 + fxInt*120;
+      chain.connect(low); low.connect(hi);
+      // crackle
+      const noise = ctx.createBufferSource();
+      const buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+      const ch = buf.getChannelData(0);
+      for (let i = 0; i < ch.length; i++) ch[i] = Math.random() < 0.01 ? (Math.random()-0.5) : 0;
+      noise.buffer = buf; noise.loop = true;
+      const ng = ctx.createGain(); ng.gain.value = fxInt * 0.3;
+      noise.connect(ng); ng.connect(gainNode);
+      noise.start();
+      chain = hi;
+      break;
+    }
+    case 'DRIFT SCREECH': {
+      const osc = ctx.createOscillator();
+      osc.type = 'sawtooth';
+      osc.frequency.value = 1200 + fxInt*1800;
+      const og = ctx.createGain(); og.gain.value = fxInt * 0.08;
+      osc.connect(og); og.connect(gainNode);
+      osc.start();
+      break;
+    }
+    case 'RADIO AM': {
+      const low = ctx.createBiquadFilter();
+      low.type = 'bandpass';
+      low.frequency.value = 1600 + fxInt*800;
+      low.Q.value = 4 + fxInt*4;
+      const dist = ctx.createWaveShaper();
+      dist.curve = makeDistortionCurve(50 + fxInt*200);
+      chain.connect(low); low.connect(dist);
+      chain = dist;
+      break;
+    }
+    case 'MEGAPHONE': {
+      const bp = ctx.createBiquadFilter();
+      bp.type = 'bandpass'; bp.frequency.value = 1900; bp.Q.value = 1.5;
+      const dist = ctx.createWaveShaper();
+      dist.curve = makeDistortionCurve(120 + fxInt*200);
+      chain.connect(bp); bp.connect(dist);
+      chain = dist;
+      break;
+    }
+    case 'DISTORTION': {
+      const dist = ctx.createWaveShaper();
+      dist.curve = makeDistortionCurve(50 + fxInt*450);
+      dist.oversample = '4x';
+      chain.connect(dist);
+      chain = dist;
+      break;
+    }
+    case 'PHASER': {
+      const ap = ctx.createBiquadFilter();
+      ap.type = 'allpass'; ap.frequency.value = 800;
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = 0.5 + fxInt*2;
+      const lfoG = ctx.createGain(); lfoG.gain.value = 600 + fxInt*1200;
+      lfo.connect(lfoG); lfoG.connect(ap.frequency);
+      chain.connect(ap);
+      chain = ap;
+      lfo.start();
+      break;
+    }
+    case '8D PAN': {
+      const pan = ctx.createStereoPanner();
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = 0.3 + fxInt*1.2;
+      const lfoG = ctx.createGain(); lfoG.gain.value = 0.95;
+      lfo.connect(lfoG); lfoG.connect(pan.pan);
+      chain.connect(pan);
+      chain = pan;
+      lfo.start();
+      break;
+    }
+  }
+  chain.connect(gainNode);
+  gainNode.connect(analyser);
+  analyser.connect(ctx.destination);
+  audState.source = src;
+  audState.gain = gainNode;
+  audState.analyser = analyser;
+  src.start();
+  audState.playing = true;
+  src.onended = () => { audState.playing = false; };
+  beep(880, 0.06, 'square', 0.05);
+}
+
+/* Spectrum visualizer (RPM-meter style) */
+const audVis = document.getElementById('audVis');
+const audVisCtx = audVis.getContext('2d');
+function tickAudVis() {
+  audVisCtx.fillStyle = 'rgba(5,5,7,0.4)';
+  audVisCtx.fillRect(0, 0, audVis.width, audVis.height);
+
+  // baseline grid
+  audVisCtx.strokeStyle = '#1a1a26';
+  audVisCtx.lineWidth = 1;
+  for (let i = 0; i < 10; i++) {
+    audVisCtx.beginPath();
+    audVisCtx.moveTo(0, i * audVis.height / 10);
+    audVisCtx.lineTo(audVis.width, i * audVis.height / 10);
+    audVisCtx.stroke();
+  }
+
+  if (audState.analyser) {
+    const a = audState.analyser;
+    const data = new Uint8Array(a.frequencyBinCount);
+    a.getByteFrequencyData(data);
+    const bars = 64;
+    const bw = audVis.width / bars;
+    let avg = 0;
+    for (let i = 0; i < bars; i++) {
+      const v = data[i] / 255;
+      avg += v;
+      const bh = v * audVis.height * 0.95;
+      const grad = audVisCtx.createLinearGradient(0, audVis.height, 0, audVis.height - bh);
+      grad.addColorStop(0, '#05d9e8');
+      grad.addColorStop(0.5, '#ffd23f');
+      grad.addColorStop(1, '#ff2a6d');
+      audVisCtx.fillStyle = grad;
+      audVisCtx.fillRect(i*bw + 1, audVis.height - bh, bw - 2, bh);
+    }
+    avg /= bars;
+    // RPM needle text
+    audVisCtx.fillStyle = '#05d9e8';
+    audVisCtx.font = 'bold 14px JetBrains Mono';
+    audVisCtx.fillText('RPM: ' + Math.floor(avg * 9000).toString().padStart(4, '0'), 10, 18);
+    audVisCtx.fillText('FILTER: ' + (audState.filter || 'NONE'), 10, audVis.height - 8);
+  } else {
+    audVisCtx.fillStyle = '#2a2a3a';
+    audVisCtx.font = 'bold 14px JetBrains Mono';
+    audVisCtx.fillText('// AWAITING SIGNAL', 14, audVis.height/2);
+  }
+  requestAnimationFrame(tickAudVis);
+}
+tickAudVis();
+
+/* =============================================================
+   VIDEO BAY
+   ============================================================= */
+const VID_FILTERS = [
+  'SPEED RAMP','MOTION BLUR','ANAMORPHIC','FORZA GRADE',
+  'F&F TINT','POLICE STROBE','VHS DASHCAM','SLOW-MO',
+  'HEAT HAZE','CHROMATIC AB'
+];
+
+const vidState = { filter: null, video: null, bri:100, con:100, sat:100, fx:0.5, raf: null };
+
+const vidFiltersBox = document.getElementById('vidFilters');
+VID_FILTERS.forEach(name => {
+  const b = document.createElement('button');
+  b.className = 'fbtn';
+  b.textContent = name;
+  b.addEventListener('click', () => {
+    vidState.filter = vidState.filter === name ? null : name;
+    vidFiltersBox.querySelectorAll('.fbtn').forEach(x => x.classList.toggle('active', x.textContent === vidState.filter));
+  });
+  vidFiltersBox.appendChild(b);
+});
+
+const vidDrop = document.getElementById('vidDrop');
+const vidFile = document.getElementById('vidFile');
+const vidSrc = document.getElementById('vidSrc');
+const vidCanvas = document.getElementById('vidCanvas');
+const vidCtx = vidCanvas.getContext('2d');
+const vidEmpty = document.getElementById('vidEmpty');
+
+vidDrop.addEventListener('click', () => vidFile.click());
+vidDrop.addEventListener('dragover', e => { e.preventDefault(); vidDrop.classList.add('dragover'); });
+vidDrop.addEventListener('dragleave', () => vidDrop.classList.remove('dragover'));
+vidDrop.addEventListener('drop', e => {
+  e.preventDefault(); vidDrop.classList.remove('dragover');
+  if (e.dataTransfer.files[0]) loadVideo(e.dataTransfer.files[0]);
+});
+vidFile.addEventListener('change', e => { if (e.target.files[0]) loadVideo(e.target.files[0]); });
+
+function loadVideo(file) {
+  const url = URL.createObjectURL(file);
+  vidSrc.src = url;
+  vidSrc.onloadedmetadata = () => {
+    const maxW = 880, maxH = 540;
+    let w = vidSrc.videoWidth, h = vidSrc.videoHeight;
+    const scale = Math.min(maxW / w, maxH / h, 1);
+    vidCanvas.width = Math.floor(w * scale);
+    vidCanvas.height = Math.floor(h * scale);
+    vidEmpty.style.display = 'none';
+    vidCanvas.style.display = 'block';
+    vidSrc.play();
+    if (!vidState.raf) drawVideoLoop();
+  };
+}
+
+[['sliVBri','bri','lblVBri','%'],['sliVCon','con','lblVCon','%'],['sliVSat','sat','lblVSat','%']]
+.forEach(([s, key, lab, suf]) => {
+  document.getElementById(s).addEventListener('input', e => {
+    vidState[key] = +e.target.value;
+    document.getElementById(lab).textContent = e.target.value + suf;
+  });
+});
+document.getElementById('sliVFx').addEventListener('input', e => {
+  vidState.fx = +e.target.value / 100;
+  document.getElementById('lblVFx').textContent = e.target.value + '%';
+});
+
+document.getElementById('vidPlay').addEventListener('click', () => {
+  if (vidSrc.src) { vidSrc.play(); if (!vidState.raf) drawVideoLoop(); }
+});
+document.getElementById('vidPause').addEventListener('click', () => vidSrc.pause());
+
+let prevFrame = null;
+let strobeFlag = 0;
+
+function drawVideoLoop() {
+  vidState.raf = requestAnimationFrame(drawVideoLoop);
+  if (vidSrc.readyState < 2) return;
+  const w = vidCanvas.width, h = vidCanvas.height;
+
+  // motion blur trail
+  if (vidState.filter === 'MOTION BLUR') {
+    vidCtx.fillStyle = `rgba(10,10,15,${0.4 - vidState.fx * 0.35})`;
+    vidCtx.fillRect(0, 0, w, h);
+  } else if (vidState.filter === 'SLOW-MO') {
+    if (vidSrc.playbackRate !== 0.3 + (1 - vidState.fx) * 0.5) {
+      try { vidSrc.playbackRate = 0.3 + (1 - vidState.fx) * 0.5; } catch(e){}
+    }
+  } else if (vidState.filter === 'SPEED RAMP') {
+    try { vidSrc.playbackRate = 1 + vidState.fx * 2; } catch(e){}
+  } else {
+    try { if (vidSrc.playbackRate !== 1) vidSrc.playbackRate = 1; } catch(e){}
+  }
+
+  vidCtx.save();
+  vidCtx.filter = `brightness(${vidState.bri}%) contrast(${vidState.con}%) saturate(${vidState.sat}%)`;
+
+  if (vidState.filter === 'VHS DASHCAM') {
+    // jiggle
+    const jx = (Math.random()-0.5)*2;
+    const jy = (Math.random()-0.5)*2;
+    vidCtx.drawImage(vidSrc, jx, jy, w, h);
+  } else {
+    vidCtx.drawImage(vidSrc, 0, 0, w, h);
+  }
+  vidCtx.restore();
+
+  // post effects
+  switch(vidState.filter) {
+    case 'ANAMORPHIC': {
+      vidCtx.globalCompositeOperation = 'screen';
+      const g = vidCtx.createLinearGradient(0, h*0.4, w, h*0.4);
+      g.addColorStop(0, 'rgba(5,217,232,0)');
+      g.addColorStop(0.5, `rgba(5,217,232,${0.4*vidState.fx})`);
+      g.addColorStop(1, 'rgba(5,217,232,0)');
+      vidCtx.fillStyle = g;
+      vidCtx.fillRect(0, h*0.4 - 3, w, 6);
+      vidCtx.globalCompositeOperation = 'source-over';
+      break;
+    }
+    case 'FORZA GRADE': {
+      vidCtx.globalCompositeOperation = 'overlay';
+      const g = vidCtx.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, `rgba(255,180,80,${0.3*vidState.fx})`);
+      g.addColorStop(1, `rgba(0,40,80,${0.3*vidState.fx})`);
+      vidCtx.fillStyle = g;
+      vidCtx.fillRect(0, 0, w, h);
+      vidCtx.globalCompositeOperation = 'source-over';
+      break;
+    }
+    case 'F&F TINT': {
+      vidCtx.globalCompositeOperation = 'multiply';
+      vidCtx.fillStyle = `rgba(120,200,80,${0.25*vidState.fx})`;
+      vidCtx.fillRect(0, 0, w, h);
+      vidCtx.globalCompositeOperation = 'source-over';
+      break;
+    }
+    case 'POLICE STROBE': {
+      strobeFlag = (strobeFlag + 1) % 16;
+      const t = Math.floor(strobeFlag/4);
+      vidCtx.globalCompositeOperation = 'screen';
+      if (t === 0) {
+        vidCtx.fillStyle = `rgba(0,0,255,${0.5*vidState.fx})`;
+        vidCtx.fillRect(0, 0, w/2, h);
+      } else if (t === 2) {
+        vidCtx.fillStyle = `rgba(255,0,0,${0.5*vidState.fx})`;
+        vidCtx.fillRect(w/2, 0, w/2, h);
+      }
+      vidCtx.globalCompositeOperation = 'source-over';
+      break;
+    }
+    case 'VHS DASHCAM': {
+      // scanlines
+      vidCtx.fillStyle = `rgba(0,0,0,${0.3*vidState.fx})`;
+      for (let y = 0; y < h; y += 4) vidCtx.fillRect(0, y, w, 1);
+      // hud
+      vidCtx.fillStyle = '#ff2a6d';
+      vidCtx.font = 'bold 16px JetBrains Mono';
+      const t = new Date();
+      vidCtx.fillText('● REC  ' + t.toTimeString().slice(0,8), 12, 24);
+      vidCtx.fillText('GPS: 48.14N 17.10E', 12, h - 14);
+      vidCtx.fillText('SPD: ' + Math.floor(80 + Math.random()*40) + ' km/h', w - 180, h - 14);
+      break;
+    }
+    case 'HEAT HAZE': {
+      // pixel shimmer
+      const slice = 10;
+      for (let i = 0; i < h; i += slice) {
+        const off = Math.sin(Date.now()/200 + i/20) * 3 * vidState.fx;
+        const s = vidCtx.getImageData(0, i, w, slice);
+        vidCtx.putImageData(s, off, i);
+      }
+      break;
+    }
+    case 'CHROMATIC AB': {
+      const off = Math.floor(2 + vidState.fx * 8);
+      const data = vidCtx.getImageData(0, 0, w, h);
+      const out = vidCtx.createImageData(w, h);
+      const d = data.data, o = out.data;
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const i = (y*w+x)*4;
+          const iR = (y*w+Math.min(w-1, Math.max(0, x+off)))*4;
+          const iB = (y*w+Math.min(w-1, Math.max(0, x-off)))*4;
+          o[i] = d[iR]; o[i+1] = d[i+1]; o[i+2] = d[iB+2]; o[i+3] = 255;
+        }
+      }
+      vidCtx.putImageData(out, 0, 0);
+      break;
+    }
+  }
+}
+
+/* =============================================================
+   3D BAY — NFSU2-STYLE GARAGE TUNER
+   ============================================================= */
+const PAINTS = [
+  '#ff2a6d','#05d9e8','#ffd23f','#9d4edd','#ff6f00','#43ff7a',
+  '#ffffff','#111111','#c8102e','#0066ff','#ff5fa2','#00ffaa',
+  '#ffa500','#a0a0a0','#8b0000','#000080'
+];
+const RIM_COLORS = ['#cccccc','#111111','#ffd23f','#ff2a6d','#05d9e8','#ffffff','#c0392b','#bdc3c7'];
+const STRIPE_COLORS = ['#ffffff','#111111','#ff2a6d','#05d9e8','#ffd23f','#43ff7a'];
+const NEON_COLORS = ['#ff2a6d','#05d9e8','#ffd23f','#43ff7a','#9d4edd','#ff6f00','#ffffff','#00ffaa'];
+const TINT_COLORS = ['#000000','#1a1a1a','#0a0a3a','#0a3a0a','#3a0a3a','#3a1a0a'];
+const SPOILER_COLORS = ['#111111','#ff2a6d','#05d9e8','#ffffff','#ffd23f','#c0392b'];
+
+const ENVS = [
+  ['GARAGE',    '#0a0a14', '#888888', '#181820'],
+  ['SHOWROOM',  '#1f1f2a', '#ffffff', '#2a2a3a'],
+  ['NIGHT TOKYO','#080814', '#ff2a6d', '#0a0a14'],
+  ['DESERT',    '#c9956a', '#fff2cc', '#a0764e'],
+  ['TRACK',     '#1a3a1a', '#888888', '#0a1a0a'],
+  ['CYBER',     '#0a0044', '#ff00ff', '#1a0066']
+];
+
+const T = {
+  inited: false,
+  scene: null, camera: null, renderer: null,
+  car: null, parts: {},
+  finish: 'gloss', color: '#ff2a6d',
+  stripe: 'none', stripeColor: '#ffffff',
+  rim: '5spoke', rimColor: '#cccccc',
+  tireSize: 18, camber: 0, stretch: 0,
+  bodyKit: 'stock', sideSkirt: 'none', frontLip: 'none',
+  spoilerType: 'wing', spoilerColor: '#111111', wingHeight: 1.0,
+  hood: 'stock', headlight: 'xenon',
+  tintColor: '#000000', tintDark: 0.4, tintRefl: 0.5,
+  neon: 'off', neonColor: '#ff2a6d', neonI: 0.7, neonSpread: 1.0,
+  rideH: 0, frontDrop: 0, rearDrop: 0, wheelPoke: 0,
+  env: ENVS[0], cam: 'auto',
+  buildName: 'PROJECT GTR',
+  orbit: { theta: Math.PI*0.25, phi: Math.PI*0.36, radius: 7.5, dragging: false, lx: 0, ly: 0 },
+  lastFrame: performance.now(), fps: 0,
+  rainbowHue: 0
+};
+let THREEx = null;
+
+function buildSwatches(boxId, palette, activeIdx, onClick, cls='') {
+  const box = document.getElementById(boxId);
+  if (!box) return;
+  box.innerHTML = '';
+  if (cls) box.classList.add(cls);
+  palette.forEach((c, i) => {
+    const s = document.createElement('div');
+    s.className = 'sw' + (i === activeIdx ? ' active' : '');
+    s.style.background = c;
+    s.dataset.c = c;
+    s.addEventListener('click', () => {
+      box.querySelectorAll('.sw').forEach(x => x.classList.remove('active'));
+      s.classList.add('active');
+      onClick(c);
+    });
+    box.appendChild(s);
+  });
+}
+
+function bindOptRow(rowId, initial, onPick) {
+  const row = document.getElementById(rowId);
+  if (!row) return;
+  row.querySelectorAll('.opt').forEach(b => {
+    if (b.dataset.v === initial) b.classList.add('active');
+    b.addEventListener('click', () => {
+      row.querySelectorAll('.opt').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      onPick(b.dataset.v);
+    });
+  });
+}
+
+document.getElementById('tunerTabs').querySelectorAll('.t-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.getElementById('tunerTabs').querySelectorAll('.t-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelectorAll('.t-panel').forEach(p => p.classList.remove('active'));
+    document.querySelector('.t-panel[data-pane="' + tab.dataset.tab + '"]').classList.add('active');
+    beep(700, 0.03, 'square', 0.04);
+  });
+});
+
+buildSwatches('paintColors', PAINTS, 0, c => { T.color = c; rebuildCar(); paintSparkle(c); }, '');
+function paintSparkle(c) {
+  const cont = document.getElementById('three-container');
+  if (!cont) return;
+  const fx = document.createElement('div');
+  fx.style.cssText = 'position:absolute;left:50%;top:50%;width:30px;height:30px;border-radius:50%;background:'+c+';box-shadow:0 0 60px '+c+',0 0 120px '+c+';transform:translate(-50%,-50%) scale(0);transition:transform .6s,opacity .8s;z-index:5;pointer-events:none;opacity:.9';
+  cont.appendChild(fx);
+  requestAnimationFrame(() => { fx.style.transform = 'translate(-50%,-50%) scale(20)'; fx.style.opacity = '0'; });
+  setTimeout(() => fx.remove(), 900);
+  beep(1200, 0.04, 'square', 0.05);
+}
+buildSwatches('stripeColors', STRIPE_COLORS, 0, c => { T.stripeColor = c; rebuildCar(); }, 'small');
+buildSwatches('rimColors', RIM_COLORS, 0, c => { T.rimColor = c; rebuildCar(); }, 'small');
+buildSwatches('spoilerColors', SPOILER_COLORS, 0, c => { T.spoilerColor = c; rebuildCar(); }, 'small');
+buildSwatches('tintColors', TINT_COLORS, 0, c => { T.tintColor = c; applyTint(); }, 'small');
+buildSwatches('neonColors', NEON_COLORS, 0, c => { T.neonColor = c; }, 'small');
+
+bindOptRow('paintFinish', 'gloss', v => { T.finish = v; rebuildCar(); document.getElementById('hudFin').textContent = v.toUpperCase(); });
+bindOptRow('stripeStyle', 'none', v => { T.stripe = v; rebuildCar(); });
+bindOptRow('rimStyle', '5spoke', v => { T.rim = v; rebuildCar(); updateHudRim(); });
+bindOptRow('bodyKit', 'stock', v => { T.bodyKit = v; rebuildCar(); });
+bindOptRow('sideSkirt', 'none', v => { T.sideSkirt = v; rebuildCar(); });
+bindOptRow('frontLip', 'none', v => { T.frontLip = v; rebuildCar(); });
+bindOptRow('spoilerType', 'wing', v => { T.spoilerType = v; rebuildCar(); });
+bindOptRow('hoodType', 'stock', v => { T.hood = v; rebuildCar(); });
+bindOptRow('hlType', 'xenon', v => { T.headlight = v; rebuildCar(); });
+bindOptRow('neonMode', 'off', v => { T.neon = v; });
+bindOptRow('camMode', 'auto', v => { T.cam = v; setCameraPreset(v); });
+bindOptRow('stancePreset', 'reset', v => {
+  switch(v) {
+    case 'reset':     T.rideH=0; T.frontDrop=0; T.rearDrop=0; T.wheelPoke=0; T.camber=0; break;
+    case 'slammed':   T.rideH=-25; T.frontDrop=-15; T.rearDrop=-15; T.wheelPoke=15; break;
+    case 'hellaflush':T.rideH=-22; T.frontDrop=-12; T.rearDrop=-18; T.wheelPoke=28; T.camber=-10; break;
+    case 'raked':     T.rideH=-12; T.frontDrop=-22; T.rearDrop=2; T.wheelPoke=5; break;
+    case 'track':     T.rideH=-8; T.frontDrop=-8; T.rearDrop=-8; T.wheelPoke=0; T.camber=-3; break;
+  }
+  syncStanceSliders();
+  rebuildCar();
+});
+function syncStanceSliders() {
+  document.getElementById('sliRH').value = T.rideH; document.getElementById('lblRH').textContent = T.rideH;
+  document.getElementById('sliFD').value = T.frontDrop; document.getElementById('lblFD').textContent = T.frontDrop;
+  document.getElementById('sliRD').value = T.rearDrop; document.getElementById('lblRD').textContent = T.rearDrop;
+  document.getElementById('sliPoke').value = T.wheelPoke; document.getElementById('lblPoke').textContent = T.wheelPoke;
+  document.getElementById('sliCamber').value = T.camber; document.getElementById('lblCamber').textContent = T.camber + '°';
+}
+
+function bindSlider(id, lblId, suffix, key, transform) {
+  document.getElementById(id).addEventListener('input', e => {
+    const v = +e.target.value;
+    T[key] = transform ? transform(v) : v;
+    document.getElementById(lblId).textContent = v + suffix;
+    rebuildCar();
+  });
+}
+bindSlider('sliTire',   'lblTire',   '"', 'tireSize');
+bindSlider('sliCamber', 'lblCamber', '°', 'camber');
+bindSlider('sliStretch','lblStretch','%','stretch', v => v/100);
+bindSlider('sliWingH',  'lblWingH',  '%','wingHeight', v => v/100);
+bindSlider('sliRH',     'lblRH',     '', 'rideH');
+bindSlider('sliFD',     'lblFD',     '', 'frontDrop');
+bindSlider('sliRD',     'lblRD',     '', 'rearDrop');
+bindSlider('sliPoke',   'lblPoke',   '', 'wheelPoke');
+
+document.getElementById('sliTint').addEventListener('input', e => {
+  T.tintDark = +e.target.value / 100;
+  document.getElementById('lblTint').textContent = e.target.value + '%';
+  applyTint();
+});
+document.getElementById('sliRefl').addEventListener('input', e => {
+  T.tintRefl = +e.target.value / 100;
+  document.getElementById('lblRefl').textContent = e.target.value + '%';
+  applyTint();
+});
+document.getElementById('sliNeonI').addEventListener('input', e => {
+  T.neonI = +e.target.value / 100;
+  document.getElementById('lblNeonI').textContent = e.target.value + '%';
+});
+document.getElementById('sliNeonS').addEventListener('input', e => {
+  T.neonSpread = +e.target.value / 100;
+  document.getElementById('lblNeonS').textContent = e.target.value + '%';
+});
+
+document.getElementById('buildNameInput').addEventListener('input', e => {
+  T.buildName = (e.target.value || 'BUILD').toUpperCase();
+  document.getElementById('buildName').textContent = T.buildName;
+  document.getElementById('hudBuild').textContent = T.buildName;
+});
+
+const envGridBox = document.getElementById('envGrid');
+ENVS.forEach((e, i) => {
+  const b = document.createElement('button');
+  b.className = 'envbtn opt' + (i === 0 ? ' active' : '');
+  b.textContent = e[0];
+  b.addEventListener('click', () => {
+    envGridBox.querySelectorAll('.envbtn').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    T.env = e;
+    applyEnv();
+  });
+  envGridBox.appendChild(b);
+});
+
+document.getElementById('randomBuild').addEventListener('click', () => {
+  const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+  T.color = pick(PAINTS);
+  T.finish = pick(['gloss','metallic','matte','chrome','pearl']);
+  T.stripe = pick(['none','center','dual','rally']);
+  T.stripeColor = pick(STRIPE_COLORS);
+  T.rim = pick(['5spoke','mesh','deep','split','turbine','blade']);
+  T.rimColor = pick(RIM_COLORS);
+  T.tireSize = 17 + Math.floor(Math.random()*5);
+  T.bodyKit = pick(['stock','sport','aggro','wide']);
+  T.spoilerType = pick(['none','lip','duck','wing','gt','track']);
+  T.hood = pick(['stock','scoop','vent','cowl','cf']);
+  T.neon = pick(['off','solid','pulse','rainbow']);
+  T.neonColor = pick(NEON_COLORS);
+  syncTunerUI();
+  rebuildCar();
+  glitchFlash();
+  beep(440, 0.05); setTimeout(()=>beep(660,0.05),60); setTimeout(()=>beep(880,0.08),120);
+});
+
+function syncTunerUI() {
+  const setActive = (rowId, val) => {
+    document.querySelectorAll('#'+rowId+' .opt').forEach(b => b.classList.toggle('active', b.dataset.v === val));
+  };
+  setActive('paintFinish', T.finish);
+  setActive('stripeStyle', T.stripe);
+  setActive('rimStyle', T.rim);
+  setActive('bodyKit', T.bodyKit);
+  setActive('sideSkirt', T.sideSkirt);
+  setActive('frontLip', T.frontLip);
+  setActive('spoilerType', T.spoilerType);
+  setActive('hoodType', T.hood);
+  setActive('hlType', T.headlight);
+  setActive('neonMode', T.neon);
+  const setSw = (boxId, color) => {
+    document.querySelectorAll('#'+boxId+' .sw').forEach(s => s.classList.toggle('active', s.dataset.c === color));
+  };
+  setSw('paintColors', T.color);
+  setSw('stripeColors', T.stripeColor);
+  setSw('rimColors', T.rimColor);
+  setSw('spoilerColors', T.spoilerColor);
+  setSw('neonColors', T.neonColor);
+  document.getElementById('sliTire').value = T.tireSize;
+  document.getElementById('lblTire').textContent = T.tireSize + '"';
+  syncStanceSliders();
+  document.getElementById('hudFin').textContent = T.finish.toUpperCase();
+  updateHudRim();
+}
+
+function updateHudRim() {
+  document.getElementById('hudRim').textContent = T.rim.toUpperCase() + ' ' + T.tireSize + '"';
+}
+
+document.getElementById('exportShot').addEventListener('click', () => {
+  if (!T.renderer) return alert('Viewport not ready');
+  T.renderer.render(T.scene, T.camera);
+  const a = document.createElement('a');
+  a.download = T.buildName.replace(/[^A-Z0-9]/gi,'_') + '_' + Date.now() + '.jpg';
+  a.href = T.renderer.domElement.toDataURL('image/jpeg', 0.92);
+  a.click();
+});
+
+function initThreeLazy() {
+  if (T.inited) return;
+  T.inited = true;
+  const empty = document.getElementById('threeEmpty');
+  empty.textContent = '[ LOADING WEBGL RUNTIME... ]';
+
+  const door = document.getElementById('garageDoor');
+  setTimeout(() => { if (door) door.classList.add('open'); }, 600);
+
+  const s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+  s.onload = () => {
+    THREEx = window.THREE;
+    try { setupGarage(); }
+    catch(e) {
+      empty.style.display = 'block';
+      empty.style.color = '#ff2a6d';
+      empty.textContent = '[ INIT ERROR: ' + e.message + ' ]';
+      console.error(e);
+    }
+  };
+  s.onerror = () => {
+    empty.style.color = '#ff2a6d';
+    empty.textContent = '[ THREE.JS UNAVAILABLE — CONNECT INTERNET ONCE TO CACHE CDN ]';
+  };
+  document.head.appendChild(s);
+}
+
+function setupGarage() {
+  const THREE = THREEx;
+  const cont = document.getElementById('three-container');
+  document.getElementById('threeEmpty').style.display = 'none';
+
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0x0a0a14, 12, 30);
+  scene.background = new THREE.Color(T.env[1]);
+
+  const camera = new THREE.PerspectiveCamera(40, cont.clientWidth/cont.clientHeight, 0.1, 200);
+  applyOrbitCamera(camera);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+  renderer.setSize(cont.clientWidth, cont.clientHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  cont.appendChild(renderer.domElement);
+
+  T.scene = scene; T.camera = camera; T.renderer = renderer;
+
+  buildLights();
+  buildGarage();
+  rebuildCar();
+  applyEnv();
+
+  const dom = renderer.domElement;
+  dom.style.cursor = 'grab';
+  dom.addEventListener('mousedown', e => {
+    T.orbit.dragging = true; T.orbit.lx = e.clientX; T.orbit.ly = e.clientY;
+    dom.style.cursor = 'grabbing';
+  });
+  window.addEventListener('mouseup', () => { T.orbit.dragging = false; dom.style.cursor = 'grab'; });
+  window.addEventListener('mousemove', e => {
+    if (!T.orbit.dragging) return;
+    const dx = e.clientX - T.orbit.lx;
+    const dy = e.clientY - T.orbit.ly;
+    T.orbit.lx = e.clientX; T.orbit.ly = e.clientY;
+    T.orbit.theta -= dx * 0.008;
+    T.orbit.phi   -= dy * 0.005;
+    T.orbit.phi = Math.max(0.15, Math.min(Math.PI*0.49, T.orbit.phi));
+    if (T.cam !== 'orbit') {
+      T.cam = 'orbit';
+      document.querySelectorAll('#camMode .opt').forEach(b => b.classList.toggle('active', b.dataset.v === 'orbit'));
+    }
+  });
+  dom.addEventListener('wheel', e => {
+    e.preventDefault();
+    T.orbit.radius += e.deltaY * 0.005;
+    T.orbit.radius = Math.max(3, Math.min(18, T.orbit.radius));
+  }, { passive: false });
+  dom.addEventListener('touchstart', e => {
+    if (e.touches.length === 1) {
+      T.orbit.dragging = true; T.orbit.lx = e.touches[0].clientX; T.orbit.ly = e.touches[0].clientY;
+    }
+  });
+  dom.addEventListener('touchmove', e => {
+    if (T.orbit.dragging && e.touches.length === 1) {
+      const dx = e.touches[0].clientX - T.orbit.lx;
+      const dy = e.touches[0].clientY - T.orbit.ly;
+      T.orbit.lx = e.touches[0].clientX; T.orbit.ly = e.touches[0].clientY;
+      T.orbit.theta -= dx * 0.012;
+      T.orbit.phi   -= dy * 0.008;
+      T.orbit.phi = Math.max(0.15, Math.min(Math.PI*0.49, T.orbit.phi));
+    }
+  });
+  dom.addEventListener('touchend', () => { T.orbit.dragging = false; });
+
+  if (typeof ResizeObserver !== 'undefined') {
+    const ro = new ResizeObserver(() => {
+      renderer.setSize(cont.clientWidth, cont.clientHeight);
+      camera.aspect = cont.clientWidth/cont.clientHeight;
+      camera.updateProjectionMatrix();
+    });
+    ro.observe(cont);
+  }
+
+  animateGarage();
+}
+
+function applyOrbitCamera(camera) {
+  const r = T.orbit.radius;
+  camera.position.set(
+    r * Math.sin(T.orbit.phi) * Math.cos(T.orbit.theta),
+    r * Math.cos(T.orbit.phi),
+    r * Math.sin(T.orbit.phi) * Math.sin(T.orbit.theta)
+  );
+  camera.lookAt(0, 0.6, 0);
+}
+
+function setCameraPreset(name) {
+  switch(name) {
+    case 'orbit':    break;
+    case 'auto':     break;
+    case 'lowfront': T.orbit.theta = Math.PI*0.05; T.orbit.phi = Math.PI*0.45; T.orbit.radius = 6; break;
+    case 'topdown':  T.orbit.theta = Math.PI*0.25; T.orbit.phi = 0.18; T.orbit.radius = 9; break;
+    case 'cinema':   T.orbit.theta = Math.PI*0.85; T.orbit.phi = Math.PI*0.4; T.orbit.radius = 8; break;
+  }
+}
+
+function buildLights() {
+  const THREE = THREEx, scene = T.scene;
+  const amb = new THREE.AmbientLight(0xffffff, 0.3);
+  scene.add(amb); T.parts.amb = amb;
+
+  const sp = new THREE.SpotLight(0xffffff, 2.0, 30, Math.PI/4, 0.4, 1);
+  sp.position.set(0, 9, 0);
+  sp.castShadow = true;
+  sp.shadow.mapSize.width = 1024; sp.shadow.mapSize.height = 1024;
+  scene.add(sp); T.parts.spot = sp;
+
+  const mv = new THREE.SpotLight(0xff2a6d, 1.4, 22, Math.PI/5, 0.5, 1);
+  mv.position.set(4, 6, 4);
+  scene.add(mv); T.parts.mv = mv;
+
+  const fill = new THREE.PointLight(0x05d9e8, 0.5, 18);
+  fill.position.set(-5, 3, -4);
+  scene.add(fill); T.parts.fill = fill;
+
+  const neon = new THREE.PointLight(0xff2a6d, 0, 6);
+  neon.position.set(0, 0.05, 0);
+  scene.add(neon); T.parts.neon = neon;
+}
+
+function buildGarage() {
+  const THREE = THREEx, scene = T.scene;
+
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(40, 40),
+    new THREE.MeshStandardMaterial({ color: 0x222230, roughness: 0.55, metalness: 0.4 })
+  );
+  floor.rotation.x = -Math.PI/2;
+  floor.receiveShadow = true;
+  scene.add(floor); T.parts.floor = floor;
+
+  const stripe = new THREE.Mesh(
+    new THREE.PlaneGeometry(40, 0.05),
+    new THREE.MeshBasicMaterial({ color: 0xffcc00 })
+  );
+  stripe.rotation.x = -Math.PI/2;
+  stripe.position.set(0, 0.001, -3.5);
+  scene.add(stripe);
+
+  const platform = new THREE.Mesh(
+    new THREE.CylinderGeometry(3.6, 3.6, 0.15, 64),
+    new THREE.MeshStandardMaterial({ color: 0x1a1a26, roughness: 0.6, metalness: 0.7 })
+  );
+  platform.position.y = 0.075;
+  platform.receiveShadow = true;
+  scene.add(platform); T.parts.platform = platform;
+
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(3.55, 3.7, 64),
+    new THREE.MeshBasicMaterial({ color: 0x05d9e8, transparent: true, opacity: 0.9, side: THREE.DoubleSide })
+  );
+  ring.rotation.x = -Math.PI/2;
+  ring.position.y = 0.152;
+  scene.add(ring); T.parts.ring = ring;
+
+  const wallMat = new THREE.MeshStandardMaterial({ color: 0x14141c, roughness: 0.95 });
+  const wall = new THREE.Mesh(new THREE.PlaneGeometry(40, 14), wallMat);
+  wall.position.set(0, 7, -10);
+  scene.add(wall); T.parts.wall = wall;
+
+  for (let i = 0; i < 10; i++) {
+    const s = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.2, 12),
+      new THREE.MeshBasicMaterial({ color: (i%2 === 0) ? 0xffcc00 : 0x111111 })
+    );
+    s.position.set(-9 + i*1.4, 5, -9.95);
+    scene.add(s);
+  }
+
+  for (let i = -1; i <= 1; i++) {
+    const tube = new THREE.Mesh(
+      new THREE.BoxGeometry(8, 0.05, 0.2),
+      new THREE.MeshBasicMaterial({ color: 0xffffff })
+    );
+    tube.position.set(0, 8.5, i*2.5);
+    scene.add(tube);
+  }
+
+  const ugMat = new THREE.MeshBasicMaterial({ color: 0xff2a6d, transparent: true, opacity: 0, side: THREE.DoubleSide });
+  const ug = new THREE.Mesh(new THREE.CircleGeometry(2.4, 64), ugMat);
+  ug.rotation.x = -Math.PI/2;
+  ug.position.y = 0.005;
+  scene.add(ug); T.parts.underglow = ug;
+}
+
+function rebuildCar() {
+  if (!T.scene || !THREEx) return;
+  if (T.car) { T.scene.remove(T.car); disposeGroup(T.car); }
+  const car = new THREEx.Group();
+  T.car = car;
+
+  buildCarBody(car);
+  buildCarHood(car);
+  buildCarWindows(car);
+  buildCarSpoiler(car);
+  buildCarHeadlights(car);
+  buildCarTaillights(car);
+  buildCarExhaust(car);
+  buildCarBodyKit(car);
+  buildCarWheels(car);
+
+  T.scene.add(car);
+}
+
+function disposeGroup(g) {
+  g.traverse(o => {
+    if (o.geometry) o.geometry.dispose();
+    if (o.material) {
+      if (Array.isArray(o.material)) o.material.forEach(m => m.dispose());
+      else o.material.dispose();
+    }
+  });
+}
+
+function bodyMaterial() {
+  const THREE = THREEx;
+  let met = 0.6, rou = 0.25;
+  switch(T.finish) {
+    case 'gloss':    met = 0.5; rou = 0.18; break;
+    case 'metallic': met = 0.9; rou = 0.28; break;
+    case 'matte':    met = 0.05; rou = 0.85; break;
+    case 'chrome':   met = 1.0; rou = 0.04; break;
+    case 'pearl':    met = 0.7; rou = 0.15; break;
+  }
+  return new THREE.MeshStandardMaterial({
+    color: T.color, metalness: met, roughness: rou,
+    envMapIntensity: 1.2
+  });
+}
+
+function carYOffset() { return T.rideH * 0.012; }
+
+function buildCarBody(g) {
+  const THREE = THREEx;
+  const mat = bodyMaterial();
+  const isWide = T.bodyKit === 'wide';
+  const w = isWide ? 1.8 : 1.55;
+
+  const mid = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.45, w), mat);
+  mid.position.y = 0.55 + carYOffset();
+  mid.castShadow = true; g.add(mid);
+
+  const shoulder = new THREE.Mesh(new THREE.BoxGeometry(3.5, 0.32, w-0.05), mat);
+  shoulder.position.y = 0.85 + carYOffset();
+  shoulder.castShadow = true; g.add(shoulder);
+
+  const fenderW = isWide ? w + 0.4 : w + 0.05;
+  const fF = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.7, fenderW), mat);
+  fF.position.set(1.1, 0.55 + carYOffset(), 0);
+  fF.castShadow = true; g.add(fF);
+
+  const fR = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.7, fenderW), mat);
+  fR.position.set(-1.1, 0.55 + carYOffset(), 0);
+  fR.castShadow = true; g.add(fR);
+
+  const hood = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.06, w-0.1), mat);
+  hood.position.set(0.9, 0.92 + carYOffset(), 0);
+  hood.castShadow = true; g.add(hood);
+  T.parts.hood = hood;
+
+  const trunk = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.06, w-0.1), mat);
+  trunk.position.set(-1.45, 0.99 + carYOffset(), 0);
+  trunk.castShadow = true; g.add(trunk);
+
+  const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.5, w-0.1), mat);
+  cabin.position.set(-0.25, 1.22 + carYOffset(), 0);
+  cabin.castShadow = true; g.add(cabin);
+
+  const slopeF = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.04, w-0.15), mat);
+  slopeF.position.set(0.5, 1.1 + carYOffset(), 0);
+  slopeF.rotation.z = -0.35;
+  g.add(slopeF);
+
+  const slopeR = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.04, w-0.15), mat);
+  slopeR.position.set(-1.0, 1.15 + carYOffset(), 0);
+  slopeR.rotation.z = 0.42;
+  g.add(slopeR);
+
+  if (T.stripe !== 'none') {
+    const stripeMat = new THREE.MeshStandardMaterial({ color: T.stripeColor, metalness: 0.3, roughness: 0.3 });
+    if (T.stripe === 'center' || T.stripe === 'rally') {
+      const sH = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.005, 0.16), stripeMat);
+      sH.position.set(0.9, 0.96 + carYOffset(), 0);
+      g.add(sH);
+      const sT = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.005, 0.16), stripeMat);
+      sT.position.set(-1.45, 1.03 + carYOffset(), 0);
+      g.add(sT);
+      const sR = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.005, 0.16), stripeMat);
+      sR.position.set(-0.25, 1.48 + carYOffset(), 0);
+      g.add(sR);
+    }
+    if (T.stripe === 'dual' || T.stripe === 'rally') {
+      for (const zo of [-0.35, 0.35]) {
+        const sH = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.005, 0.12), stripeMat);
+        sH.position.set(0.9, 0.96 + carYOffset(), zo);
+        g.add(sH);
+        const sR = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.005, 0.12), stripeMat);
+        sR.position.set(-0.25, 1.48 + carYOffset(), zo);
+        g.add(sR);
+      }
+    }
+  }
+
+  T.parts.bodyMat = mat;
+}
+
+function buildCarHood(g) {
+  const THREE = THREEx;
+  const baseMat = T.parts.bodyMat;
+  switch(T.hood) {
+    case 'scoop': {
+      const s = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.18, 0.55), baseMat);
+      s.position.set(0.85, 1.03 + carYOffset(), 0);
+      const opening = new THREE.Mesh(
+        new THREE.BoxGeometry(0.3, 0.06, 0.4),
+        new THREE.MeshStandardMaterial({ color: 0x000000, roughness: 1 })
+      );
+      opening.position.set(0.75, 1.07 + carYOffset(), 0);
+      g.add(s); g.add(opening);
+      break;
+    }
+    case 'vent': {
+      const m = new THREE.MeshStandardMaterial({ color: 0x111111, metalness:0.6, roughness:0.5 });
+      for (const z of [-0.35, 0.35]) {
+        const v = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.02, 0.18), m);
+        v.position.set(0.85, 0.97 + carYOffset(), z);
+        g.add(v);
+      }
+      break;
+    }
+    case 'cowl': {
+      const c = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.12, 0.7), baseMat);
+      c.position.set(0.55, 1.0 + carYOffset(), 0);
+      g.add(c);
+      break;
+    }
+    case 'cf': {
+      const cfMat = new THREE.MeshStandardMaterial({ color: 0x080808, metalness: 0.3, roughness: 0.55 });
+      const cf = new THREE.Mesh(new THREE.BoxGeometry(1.42, 0.07, 1.42), cfMat);
+      cf.position.set(0.9, 0.94 + carYOffset(), 0);
+      g.add(cf);
+      for (let i = -3; i <= 3; i++) {
+        const l = new THREE.Mesh(
+          new THREE.BoxGeometry(1.4, 0.002, 0.02),
+          new THREE.MeshBasicMaterial({ color: 0x202020 })
+        );
+        l.position.set(0.9, 0.98 + carYOffset(), i*0.18);
+        g.add(l);
+      }
+      break;
+    }
+    case 'clear': {
+      const cl = new THREE.Mesh(
+        new THREE.BoxGeometry(1.42, 0.07, 1.42),
+        new THREE.MeshStandardMaterial({ color: 0x05d9e8, metalness:0.3, roughness:0.05, transparent:true, opacity:0.35 })
+      );
+      cl.position.set(0.9, 0.95 + carYOffset(), 0);
+      g.add(cl);
+      const eng = new THREE.Mesh(
+        new THREE.BoxGeometry(1.0, 0.4, 0.8),
+        new THREE.MeshStandardMaterial({ color: 0x444444, metalness:0.8, roughness:0.3 })
+      );
+      eng.position.set(0.9, 0.7 + carYOffset(), 0);
+      g.add(eng);
+      const turbo = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.18, 0.18, 0.4, 24),
+        new THREE.MeshStandardMaterial({ color: 0xc0c0c0, metalness:1, roughness:0.1 })
+      );
+      turbo.position.set(0.6, 0.75 + carYOffset(), 0.3);
+      turbo.rotation.z = Math.PI/2;
+      g.add(turbo);
+      break;
+    }
+  }
+}
+
+function buildCarWindows(g) {
+  const THREE = THREEx;
+  const tcol = new THREE.Color(T.tintColor);
+  const opacity = 0.15 + T.tintDark * 0.7;
+  const wsMat = new THREE.MeshStandardMaterial({
+    color: tcol, metalness: 0.4 + T.tintRefl*0.5,
+    roughness: 0.05, transparent: true, opacity: opacity
+  });
+  const ws = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.5, 1.4), wsMat);
+  ws.position.set(0.55, 1.13 + carYOffset(), 0);
+  ws.rotation.z = -0.4;
+  g.add(ws);
+  const rw = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.5, 1.4), wsMat);
+  rw.position.set(-1.05, 1.18 + carYOffset(), 0);
+  rw.rotation.z = 0.45;
+  g.add(rw);
+  for (const z of [0.78, -0.78]) {
+    const side = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.34, 0.03), wsMat);
+    side.position.set(-0.25, 1.27 + carYOffset(), z);
+    g.add(side);
+  }
+  T.parts.windows = wsMat;
+}
+
+function applyTint() {
+  if (T.parts.windows) {
+    T.parts.windows.color.set(T.tintColor);
+    T.parts.windows.opacity = 0.15 + T.tintDark * 0.7;
+    T.parts.windows.metalness = 0.4 + T.tintRefl * 0.5;
+    T.parts.windows.needsUpdate = true;
+  }
+}
+
+function buildCarSpoiler(g) {
+  const THREE = THREEx;
+  const m = new THREE.MeshStandardMaterial({ color: T.spoilerColor, metalness: 0.4, roughness: 0.3 });
+  const wh = T.wingHeight;
+  switch(T.spoilerType) {
+    case 'none': return;
+    case 'lip': {
+      const l = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.04, 1.4), m);
+      l.position.set(-1.9, 1.0 + carYOffset(), 0);
+      g.add(l); break;
+    }
+    case 'duck': {
+      const d = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.12, 1.4), m);
+      d.position.set(-1.85, 1.07 + carYOffset(), 0);
+      d.rotation.z = -0.2;
+      g.add(d); break;
+    }
+    case 'wing': {
+      for (const z of [-0.5, 0.5]) {
+        const strut = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.32*wh, 0.06), m);
+        strut.position.set(-1.85, 1.18 + carYOffset() + 0.16*wh, z);
+        g.add(strut);
+      }
+      const wing = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.04, 1.5), m);
+      wing.position.set(-1.85, 1.18 + carYOffset() + 0.32*wh, 0);
+      g.add(wing);
+      break;
+    }
+    case 'gt': {
+      for (const z of [-0.55, 0.55]) {
+        const strut = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.5*wh, 0.08), m);
+        strut.position.set(-1.85, 1.25 + carYOffset() + 0.25*wh, z);
+        g.add(strut);
+      }
+      const wing = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.06, 1.7), m);
+      wing.position.set(-1.85, 1.25 + carYOffset() + 0.5*wh, 0);
+      g.add(wing);
+      for (const z of [-0.83, 0.83]) {
+        const ep = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.3, 0.04), m);
+        ep.position.set(-1.85, 1.25 + carYOffset() + 0.5*wh, z);
+        g.add(ep);
+      }
+      break;
+    }
+    case 'track': {
+      for (const z of [-0.6, 0.6]) {
+        const strut = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.6*wh, 0.05), m);
+        strut.position.set(-1.7, 1.3 + carYOffset() + 0.3*wh, z);
+        strut.rotation.z = -0.4;
+        g.add(strut);
+      }
+      const wing = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.08, 1.9), m);
+      wing.position.set(-1.95, 1.3 + carYOffset() + 0.55*wh, 0);
+      wing.rotation.z = 0.06;
+      g.add(wing);
+      break;
+    }
+  }
+}
+
+function buildCarHeadlights(g) {
+  const THREE = THREEx;
+  const on = T.headlight !== 'off';
+  const colors = { halogen: 0xfff2c4, xenon: 0xeaf4ff, led: 0xffffff };
+  const col = colors[T.headlight] || 0xfff2c4;
+  if (T.headlight === 'led') {
+    const m = new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: on ? 1.5 : 0 });
+    for (const z of [-0.5, 0.5]) {
+      const bar = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.04, 0.5), m);
+      bar.position.set(1.81, 0.72 + carYOffset(), z);
+      g.add(bar);
+    }
+  } else {
+    const m = new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: on ? 1.0 : 0 });
+    for (const z of [-0.55, 0.55]) {
+      const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.18, 0.28), m);
+      lamp.position.set(1.81, 0.72 + carYOffset(), z);
+      g.add(lamp);
+    }
+  }
+}
+
+function buildCarTaillights(g) {
+  const THREE = THREEx;
+  const m = new THREE.MeshStandardMaterial({ color: 0xff0033, emissive: 0xff2244, emissiveIntensity: 0.8 });
+  for (const z of [-0.55, 0.55]) {
+    const tl = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.16, 0.32), m);
+    tl.position.set(-1.95, 0.78 + carYOffset(), z);
+    g.add(tl);
+  }
+  const bar = new THREE.Mesh(
+    new THREE.BoxGeometry(0.03, 0.06, 1.0),
+    new THREE.MeshStandardMaterial({ color: 0xff0033, emissive: 0xff0033, emissiveIntensity: 0.6 })
+  );
+  bar.position.set(-1.95, 0.78 + carYOffset(), 0);
+  g.add(bar);
+}
+
+function buildCarExhaust(g) {
+  const THREE = THREEx;
+  const m = new THREE.MeshStandardMaterial({ color: 0x999999, metalness: 1, roughness: 0.2 });
+  const isAggro = T.bodyKit === 'aggro' || T.bodyKit === 'wide';
+  const pipes = isAggro ? [-0.4, 0.4, -0.55, 0.55] : [-0.4, 0.4];
+  for (const z of pipes) {
+    const p = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.12, 16), m);
+    p.position.set(-1.95, 0.45 + carYOffset(), z);
+    p.rotation.z = Math.PI/2;
+    g.add(p);
+  }
+}
+
+function buildCarBodyKit(g) {
+  const THREE = THREEx;
+  const mat = T.parts.bodyMat;
+  if (T.bodyKit === 'sport' || T.bodyKit === 'aggro' || T.bodyKit === 'wide') {
+    const fb = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.18, 1.7), mat);
+    fb.position.set(1.85, 0.43 + carYOffset(), 0);
+    g.add(fb);
+    const rb = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.18, 1.7), mat);
+    rb.position.set(-1.85, 0.43 + carYOffset(), 0);
+    g.add(rb);
+  }
+  if (T.bodyKit === 'aggro' || T.bodyKit === 'wide') {
+    const ch = new THREE.Mesh(
+      new THREE.BoxGeometry(0.6, 0.03, 1.9),
+      new THREE.MeshStandardMaterial({ color: 0x111111, metalness:0.2, roughness:0.6 })
+    );
+    ch.position.set(1.85, 0.3 + carYOffset(), 0);
+    g.add(ch);
+  }
+  if (T.sideSkirt !== 'none' || T.bodyKit === 'aggro' || T.bodyKit === 'wide') {
+    const drop = T.sideSkirt === 'extreme' ? 0.15 : (T.sideSkirt === 'low' ? 0.08 : 0.05);
+    for (const z of [0.88, -0.88]) {
+      const sk = new THREE.Mesh(new THREE.BoxGeometry(3.0, drop, 0.08), mat);
+      sk.position.set(0, 0.4 - drop/2 + carYOffset(), z);
+      g.add(sk);
+    }
+  }
+  if (T.frontLip === 'splitter') {
+    const sp = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.03, 1.9), new THREE.MeshStandardMaterial({ color: 0x080808, metalness:0.3, roughness:0.5 }));
+    sp.position.set(1.95, 0.33 + carYOffset(), 0);
+    g.add(sp);
+  } else if (T.frontLip === 'canard') {
+    for (const z of [0.85, -0.85]) {
+      const c = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.02, 0.18), new THREE.MeshStandardMaterial({ color: 0x080808 }));
+      c.position.set(1.85, 0.42 + carYOffset(), z);
+      c.rotation.y = (z > 0 ? -0.2 : 0.2);
+      g.add(c);
+    }
+  }
+}
+
+function buildCarWheels(g) {
+  const THREE = THREEx;
+  const tireR = 0.32 + (T.tireSize - 15) * 0.04;
+  const tireW = 0.32 - T.stretch * 0.12;
+  const tireMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.85, metalness: 0.05 });
+  const rimMat  = new THREE.MeshStandardMaterial({ color: T.rimColor, metalness: 0.9, roughness: 0.2 });
+  const camberR = T.camber * Math.PI/180;
+
+  const wheelbaseZ = 0.78 + T.wheelPoke * 0.012;
+  const wheelX = [1.15, -1.15];
+
+  wheelX.forEach((x, axleI) => {
+    [wheelbaseZ, -wheelbaseZ].forEach(z => {
+      const wheelGroup = new THREE.Group();
+      wheelGroup.position.set(x, tireR + 0.02 + carYOffset(), z);
+      if (axleI === 0) wheelGroup.position.y += T.frontDrop * 0.01;
+      else             wheelGroup.position.y += T.rearDrop  * 0.01;
+      wheelGroup.rotation.x = Math.PI/2;
+      wheelGroup.rotation.z = (z > 0 ? camberR : -camberR);
+
+      const tire = new THREE.Mesh(new THREE.CylinderGeometry(tireR, tireR, tireW, 30), tireMat);
+      tire.castShadow = true;
+      wheelGroup.add(tire);
+
+      const rim = buildRim(rimMat, tireR, tireW);
+      wheelGroup.add(rim);
+
+      const disc = new THREE.Mesh(
+        new THREE.CylinderGeometry(tireR*0.7, tireR*0.7, 0.04, 24),
+        new THREE.MeshStandardMaterial({ color: 0x666666, metalness: 0.8, roughness: 0.3 })
+      );
+      disc.position.y = -tireW/2 + 0.04;
+      wheelGroup.add(disc);
+
+      const caliper = new THREE.Mesh(
+        new THREE.BoxGeometry(tireR*0.45, 0.08, 0.05),
+        new THREE.MeshStandardMaterial({ color: 0xff2a6d, metalness: 0.5, roughness: 0.3 })
+      );
+      caliper.position.set(0, -tireW/2 + 0.05, tireR*0.5);
+      wheelGroup.add(caliper);
+
+      g.add(wheelGroup);
+    });
+  });
+}
+
+function buildRim(mat, R, W) {
+  const THREE = THREEx;
+  const grp = new THREE.Group();
+  const center = new THREE.Mesh(new THREE.CylinderGeometry(R*0.85, R*0.85, W+0.005, 32), mat);
+  grp.add(center);
+  const inner = new THREE.Mesh(
+    new THREE.CylinderGeometry(R*0.95, R*0.95, W*0.4, 32),
+    new THREE.MeshStandardMaterial({ color: 0x111111, metalness:0.8, roughness:0.3 })
+  );
+  inner.position.y = W*0.3;
+  grp.add(inner);
+
+  switch(T.rim) {
+    case '5spoke': {
+      for (let i = 0; i < 5; i++) {
+        const sp = new THREE.Mesh(new THREE.BoxGeometry(R*1.5, W*0.5, R*0.14), mat);
+        sp.rotation.y = i * Math.PI*2/5;
+        sp.position.y = W*0.2;
+        grp.add(sp);
+      }
+      break;
+    }
+    case 'mesh': {
+      for (let i = 0; i < 14; i++) {
+        const sp = new THREE.Mesh(new THREE.BoxGeometry(R*1.5, W*0.45, R*0.06), mat);
+        sp.rotation.y = i * Math.PI/7;
+        sp.position.y = W*0.2;
+        grp.add(sp);
+      }
+      break;
+    }
+    case 'deep': {
+      const lip = new THREE.Mesh(
+        new THREE.CylinderGeometry(R*0.95, R*0.85, W*0.5, 32),
+        new THREE.MeshStandardMaterial({ color: 0xeeeeee, metalness: 1, roughness: 0.05 })
+      );
+      lip.position.y = W*0.25;
+      grp.add(lip);
+      for (let i = 0; i < 6; i++) {
+        const sp = new THREE.Mesh(new THREE.BoxGeometry(R*1.4, W*0.4, R*0.18), mat);
+        sp.rotation.y = i * Math.PI/3;
+        sp.position.y = W*0.15;
+        grp.add(sp);
+      }
+      break;
+    }
+    case 'split': {
+      for (let i = 0; i < 6; i++) {
+        const sp1 = new THREE.Mesh(new THREE.BoxGeometry(R*1.4, W*0.4, R*0.08), mat);
+        const sp2 = new THREE.Mesh(new THREE.BoxGeometry(R*1.4, W*0.4, R*0.08), mat);
+        sp1.rotation.y = i*Math.PI/3 - 0.1;
+        sp2.rotation.y = i*Math.PI/3 + 0.1;
+        sp1.position.y = W*0.2; sp2.position.y = W*0.2;
+        grp.add(sp1); grp.add(sp2);
+      }
+      break;
+    }
+    case 'turbine': {
+      for (let i = 0; i < 9; i++) {
+        const sp = new THREE.Mesh(new THREE.BoxGeometry(R*1.5, W*0.45, R*0.18), mat);
+        sp.rotation.y = i * Math.PI*2/9;
+        sp.rotation.x = 0.3;
+        sp.position.y = W*0.18;
+        grp.add(sp);
+      }
+      break;
+    }
+    case 'blade': {
+      for (let i = 0; i < 3; i++) {
+        const sp = new THREE.Mesh(new THREE.BoxGeometry(R*1.7, W*0.5, R*0.45), mat);
+        sp.rotation.y = i * Math.PI*2/3;
+        sp.position.y = W*0.2;
+        grp.add(sp);
+      }
+      break;
+    }
+  }
+  const cap = new THREE.Mesh(new THREE.CylinderGeometry(R*0.2, R*0.2, W*0.55, 16), mat);
+  cap.position.y = W*0.28;
+  grp.add(cap);
+
+  return grp;
+}
+
+function applyEnv() {
+  if (!T.scene) return;
+  T.scene.background = new THREEx.Color(T.env[1]);
+  if (T.parts.floor) T.parts.floor.material.color.set(T.env[3] || '#222230');
+  if (T.parts.wall)  T.parts.wall.material.color.set(T.env[3] || '#14141c');
+}
+
+function animateGarage() {
+  if (!T.scene) return;
+  requestAnimationFrame(animateGarage);
+
+  const now = performance.now();
+  const dt = (now - T.lastFrame) / 1000;
+  T.lastFrame = now;
+  T.fps = T.fps * 0.9 + (1/Math.max(dt,0.001))*0.1;
+  document.getElementById('hudFps').textContent = 'FPS:' + Math.round(T.fps);
+  document.getElementById('hudRpm').textContent = 'RPM:' + String(Math.floor(800 + Math.random()*7800)).padStart(4,'0');
+
+  if (T.cam === 'auto' && !T.orbit.dragging) {
+    T.orbit.theta += dt * 0.25;
+  } else if (T.cam === 'cinema' && !T.orbit.dragging) {
+    T.orbit.theta += dt * 0.4;
+    T.orbit.phi = Math.PI*0.36 + Math.sin(now/2000)*0.08;
+  }
+  applyOrbitCamera(T.camera);
+
+  if (T.parts.mv) {
+    T.parts.mv.position.x = Math.cos(now/3000) * 6;
+    T.parts.mv.position.z = Math.sin(now/3000) * 6;
+    T.parts.mv.target.position.set(0, 0.5, 0);
+    T.parts.mv.target.updateMatrixWorld();
+  }
+
+  let nc = T.neonColor;
+  let nVis = false;
+  switch(T.neon) {
+    case 'off': break;
+    case 'solid': nVis = true; break;
+    case 'pulse': nVis = true; break;
+    case 'rainbow': {
+      nVis = true;
+      T.rainbowHue = (T.rainbowHue + 1) % 360;
+      nc = `hsl(${T.rainbowHue}, 100%, 55%)`;
+      break;
+    }
+    case 'strobe': nVis = (Math.floor(now / 90) % 2 === 0); break;
+  }
+  if (T.parts.underglow) {
+    const ug = T.parts.underglow;
+    if (nVis) {
+      let i = T.neonI;
+      if (T.neon === 'pulse') i *= 0.6 + 0.4 * Math.sin(now/250);
+      ug.material.opacity = i * 0.9;
+      ug.material.color.set(nc);
+      ug.scale.x = ug.scale.z = T.neonSpread;
+    } else {
+      ug.material.opacity = 0;
+    }
+  }
+  if (T.parts.neon) {
+    T.parts.neon.intensity = nVis ? T.neonI * 6 : 0;
+    if (nVis) T.parts.neon.color.set(nc);
+  }
+
+  if (T.parts.ring) {
+    if (T.neon === 'rainbow' && nVis) {
+      T.parts.ring.material.color.set(nc);
+    } else {
+      T.parts.ring.material.color.set('#05d9e8');
+    }
+  }
+
+  T.renderer.render(T.scene, T.camera);
+
+  if (Math.floor(now/300) % 4 === 0) updateStatsBox();
+}
+
+function updateStatsBox() {
+  const box = document.getElementById('statsBox');
+  if (!box) return;
+  const base = 320;
+  let hp = base;
+  if (T.hood === 'scoop') hp += 25;
+  if (T.hood === 'vent') hp += 15;
+  if (T.hood === 'cf') hp += 10;
+  if (T.hood === 'clear') hp += 40;
+  if (T.bodyKit === 'sport') hp += 20;
+  if (T.bodyKit === 'aggro') hp += 60;
+  if (T.bodyKit === 'wide') hp += 75;
+  if (T.spoilerType === 'wing') hp += 8;
+  if (T.spoilerType === 'gt') hp += 25;
+  if (T.spoilerType === 'track') hp += 40;
+  hp += T.tireSize - 18;
+
+  const tq = Math.round(hp * 0.85);
+  const wt = 1380 - (T.bodyKit === 'wide' ? -40 : 0) - (T.hood === 'cf' ? 60 : 0);
+  const drag = T.spoilerType === 'gt' ? 0.34 : (T.spoilerType === 'track' ? 0.38 : 0.30);
+  const accel = Math.max(2.4, (4.2 - hp/180));
+
+  function bar(v, max) {
+    const p = Math.max(0, Math.min(100, (v/max)*100));
+    return '<span class="bar"><i style="width:' + p + '%"></i></span>';
+  }
+
+  box.innerHTML = '' +
+    '<div class="row"><span>POWER</span><b>' + hp + ' HP</b></div>' +
+    '<div class="row"><span>TORQUE</span><b>' + tq + ' Nm</b></div>' +
+    '<div class="row"><span>WEIGHT</span><b>' + wt + ' kg</b></div>' +
+    '<div class="row"><span>DRAG Cd</span><b>' + drag.toFixed(2) + '</b></div>' +
+    '<div class="row"><span>0-100 km/h</span><b>' + accel.toFixed(1) + ' s</b></div>' +
+    '<div class="row"><span>STANCE</span>' + bar(-T.rideH + (T.frontDrop+T.rearDrop)/-2, 50) + '</div>' +
+    '<div class="row"><span>GRIP</span>' + bar(60 + (T.bodyKit==='wide'?20:0) + (T.camber<-5?15:0), 100) + '</div>' +
+    '<div class="row"><span>STYLE</span>' + bar(40 + (T.neon!=='off'?20:0) + (T.spoilerType==='gt'?15:0) + (T.hood==='clear'?10:0) + (T.stripe!=='none'?10:0), 100) + '</div>';
+}
+
+/* =============================================================
+   TEXT BAY
+   ============================================================= */
+const TEXT_STYLES = ['NEON SIGN','RACING','LICENSE PLATE','SPEEDOMETER','ASCII CAR'];
+const textFiltersBox = document.getElementById('textFilters');
+let currentTextStyle = 'NEON SIGN';
+TEXT_STYLES.forEach((name, i) => {
+  const b = document.createElement('button');
+  b.className = 'fbtn' + (i === 0 ? ' active' : '');
+  b.textContent = name;
+  b.addEventListener('click', () => {
+    currentTextStyle = name;
+    textFiltersBox.querySelectorAll('.fbtn').forEach(x => x.classList.toggle('active', x.textContent === name));
+    renderText();
+  });
+  textFiltersBox.appendChild(b);
+});
+
+const textInput = document.getElementById('textInput');
+const textRender = document.getElementById('textRender');
+textInput.addEventListener('input', renderText);
+
+function renderText() {
+  const v = textInput.value || 'GARAGE FX';
+  textRender.innerHTML = '';
+  switch(currentTextStyle) {
+    case 'NEON SIGN': {
+      const d = document.createElement('div');
+      d.className = 'neon-text';
+      d.textContent = v;
+      textRender.appendChild(d);
+      break;
+    }
+    case 'RACING': {
+      const d = document.createElement('div');
+      d.className = 'racing-text';
+      d.textContent = v;
+      textRender.appendChild(d);
+      break;
+    }
+    case 'LICENSE PLATE': {
+      const d = document.createElement('div');
+      d.className = 'license-plate';
+      d.textContent = v.toUpperCase().substring(0, 10);
+      textRender.appendChild(d);
+      break;
+    }
+    case 'SPEEDOMETER': {
+      const d = document.createElement('div');
+      d.className = 'speedo-text';
+      d.textContent = v;
+      textRender.appendChild(d);
+      break;
+    }
+    case 'ASCII CAR': {
+      const pre = document.createElement('pre');
+      pre.className = 'ascii-art';
+      pre.textContent =
+'    ______________\n' +
+'   /|  ' + v.substring(0,8).padEnd(8) + ' |\\\n' +
+'  /_|_____________|_\\\n' +
+'   | [_]       [_]\n' +
+'        ' + v.substring(0,16) + '\n' +
+'   .o0===========0o.\n' +
+'  ( O )         ( O )\n' +
+"   '.'           '.'";
+      textRender.appendChild(pre);
+      break;
+    }
+  }
+}
+renderText();
+
+let speedoT = null;
+document.getElementById('textSpeedo').addEventListener('click', () => {
+  if (speedoT) { clearInterval(speedoT); speedoT = null; return; }
+  let n = 0;
+  speedoT = setInterval(() => {
+    n = (n + 17) % 999;
+    textInput.value = String(n).padStart(3, '0');
+    if (currentTextStyle !== 'SPEEDOMETER') {
+      currentTextStyle = 'SPEEDOMETER';
+      textFiltersBox.querySelectorAll('.fbtn').forEach(x => x.classList.toggle('active', x.textContent === 'SPEEDOMETER'));
+    }
+    renderText();
+  }, 80);
+});
+</script>
+</body>
+</html>
